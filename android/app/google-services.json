@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "253520933683",
+    "project_id": "roguestore-5b345",
+    "storage_bucket": "roguestore-5b345.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:253520933683:android:631a98abfb6522b5cbc446",
+        "android_client_info": {
+          "package_name": "com.example.roguestore"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "253520933683-q6i51a0ourtkqajavmddmmudb4plqm8t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.roguestore",
+            "certificate_hash": "a6fe3178846239c5f5077b65fd7c4b522b69c68e"
+          }
+        },
+        {
+          "client_id": "253520933683-7ib41q4933jaj09hf2hvtq0cukmr1p18.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzw9UkgehghYLqPUfOlvnI96JMSt0ClHE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "253520933683-7ib41q4933jaj09hf2hvtq0cukmr1p18.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "253520933683-327k216ntpaejpor1s37vpk4gnru1f5k.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.roguestore"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:253520933683:android:09a6c193e8e64eb6cbc446",
+        "android_client_info": {
+          "package_name": "com.example.roguestore_admin_panel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "253520933683-7ib41q4933jaj09hf2hvtq0cukmr1p18.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzw9UkgehghYLqPUfOlvnI96JMSt0ClHE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "253520933683-7ib41q4933jaj09hf2hvtq0cukmr1p18.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "253520933683-327k216ntpaejpor1s37vpk4gnru1f5k.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.roguestore"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
