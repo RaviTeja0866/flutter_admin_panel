@@ -7,6 +7,7 @@ import 'package:roguestore_admin_panel/features/shop/controllers/shop_category/s
 import 'package:roguestore_admin_panel/utils/constants/enums.dart';
 
 import '../../../../../../common/widgets/data_table/table_action_buttons.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
 import '../../../../../../routes/routes.dart';
 import '../../../../../../utils/constants/colors.dart';
 import '../../../../../../utils/constants/sizes.dart';
@@ -17,10 +18,17 @@ class ShopCategoryRows extends DataTableSource {
   @override
   DataRow? getRow(int index) {
     final shopCategory = controller.filteredItems[index];
+
     return DataRow2(
       selected: controller.selectedRows[index],
-      onTap: () => Get.toNamed(RSRoutes.editShopCategory, arguments: shopCategory),
-      onSelectChanged: (value) => controller.selectedRows[index] = value ?? false,
+
+      onTap: () => Get.toNamed(
+        RSRoutes.editShopCategory.replaceFirst(':id', shopCategory.id),
+      ),
+
+      onSelectChanged: (value) =>
+      controller.selectedRows[index] = value ?? false,
+
       cells: [
         DataCell(
           RSRoundedImage(
@@ -35,13 +43,27 @@ class ShopCategoryRows extends DataTableSource {
         ),
         DataCell(Text(shopCategory.title)),
         DataCell(Text(shopCategory.gender)),
-        DataCell(shopCategory.active
-            ? Icon(Iconsax.eye, color: RSColors.primary)
-            : Icon(Iconsax.eye_slash)),
-        DataCell(RSTableActionButtons(
-          onEditPressed: () => Get.toNamed(RSRoutes.editShopCategory, arguments: shopCategory),
-          onDeletePressed: () => controller.confirmAndDeleteItem(shopCategory),
-        )),
+        DataCell(
+          shopCategory.active
+              ? Icon(Iconsax.eye, color: RSColors.primary)
+              : Icon(Iconsax.eye_slash),
+        ),
+        DataCell(
+          RSTableActionButtons(
+            onEditPressed: () => Get.toNamed(
+              RSRoutes.editShopCategory.replaceFirst(':id', shopCategory.id),
+            ),
+            onDeletePressed: () {
+              ActionGuard.run(
+                permission: Permission.shopCategoryDelete, // use correct enum
+                showDeniedScreen: true,
+                action: () async {
+                  controller.confirmAndDeleteItem(shopCategory);
+                },
+              );
+            },
+          ),
+        ),
       ],
     );
   }

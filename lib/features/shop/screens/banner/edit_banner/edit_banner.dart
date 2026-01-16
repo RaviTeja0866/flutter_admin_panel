@@ -5,16 +5,22 @@ import 'package:roguestore_admin_panel/features/shop/screens/banner/edit_banner/
 import 'package:roguestore_admin_panel/features/shop/screens/banner/edit_banner/responsive_screens/edit_banner_mobile.dart';
 import 'package:roguestore_admin_panel/features/shop/screens/banner/edit_banner/responsive_screens/edit_banner_tablet.dart';
 
+import '../../../controllers/banner/edit_banner_controller.dart';
 
 class EditBannerScreen extends StatelessWidget {
   const EditBannerScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final banner = Get.arguments;
+    final bannerId = Get.parameters['id']!;
+    final controller = Get.put(EditBannerController());
+
+    controller.loadBanner(bannerId); // fetch from Firestore
+
     return RSSiteTemplate(
-        desktop: EditBannerDesktopScreen(banner: banner),
-        tablet: EditBannerTabletScreen(banner: banner),
-        mobile: EditBannerMobileScreen(banner: banner));
+      desktop: const EditBannerDesktopScreen(),
+      tablet: const EditBannerTabletScreen(),
+      mobile: const EditBannerMobileScreen(),
+    );
   }
 }

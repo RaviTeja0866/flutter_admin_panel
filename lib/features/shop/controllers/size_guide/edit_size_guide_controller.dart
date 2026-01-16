@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/features/media/controllers/media_controller.dart';
 import 'package:roguestore_admin_panel/features/shop/models/size_guide_model.dart';
 import '../../../../data/repositories/size_guide/size_guide_repository.dart';
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../utils/constants/enums.dart';
 import '../../../media/models/image_model.dart';
 import '../../../../utils/popups/full_screen_loader.dart';
 import '../../../../utils/popups/loaders.dart';
@@ -11,7 +13,7 @@ import '../../../../utils/helpers/network_manager.dart';
 class EditSizeGuideController extends GetxController {
   static EditSizeGuideController get instance => Get.find();
 
-  final SizeGuideRepository _sizeGuideRepo = Get.put(SizeGuideRepository());
+  final _sizeGuideRepo = SizeGuideRepository.instance;
 
   final formKey = GlobalKey<FormState>();
   final TextEditingController garmentTypeController = TextEditingController();
@@ -80,6 +82,10 @@ class EditSizeGuideController extends GetxController {
 
   // Update Size Guide
   Future<void> updateSizeGuide(SizeGuideModel sizeGuide) async {
+    await ActionGuard.run(
+        permission: Permission.sizeGuideUpdate,
+        showDeniedScreen: true,
+        action: () async {
     try {
       // Start Loading
       RSFullScreenLoader.popUpCircular();
@@ -104,7 +110,6 @@ class EditSizeGuideController extends GetxController {
           sizeGuide.sizes != sizes ||
           sizeGuide.measurements != measurements ||
           sizeGuide.sizeChart != sizeChart) {
-
         // Map updated data
         sizeGuide.imageURL = imageURL.value;
         sizeGuide.garmentType = garmentTypeController.text;
@@ -120,10 +125,11 @@ class EditSizeGuideController extends GetxController {
       RSFullScreenLoader.stopLoading();
 
       // Success message
-      RSLoaders.successSnackBar(title: 'Success', message: 'Size Guide has been updated');
+      RSLoaders.success(message: 'Size Guide has been updated');
     } catch (e) {
       RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Error', message: e.toString());
+      RSLoaders.error(message: e.toString());
     }
+  });
   }
 }

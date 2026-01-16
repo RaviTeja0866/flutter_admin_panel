@@ -10,6 +10,7 @@ import 'package:roguestore_admin_panel/utils/constants/colors.dart';
 import 'package:roguestore_admin_panel/utils/constants/sizes.dart';
 import 'package:roguestore_admin_panel/utils/device/device_utility.dart';
 
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
 import '../../../../../../utils/constants/enums.dart';
 import '../../../../controllers/brand/brand_controller.dart';
 
@@ -23,6 +24,8 @@ class BrandRows extends DataTableSource {
         selected: controller.selectedRows[index],
         onSelectChanged: (value) =>
             controller.selectedRows[index] = value ?? false,
+        onTap: () =>
+            Get.toNamed('/editBrand/${brand.id}'),
         cells: [
           DataCell(
             Row(
@@ -76,9 +79,17 @@ class BrandRows extends DataTableSource {
             ),
           ),
           DataCell(RSTableActionButtons(
-            onEditPressed: () => Get.toNamed(RSRoutes.editBrand, arguments: brand),
-            onDeletePressed: () => controller.confirmAndDeleteItem(brand),
-          ))
+            onEditPressed: () =>
+                Get.toNamed('/editBrand/${brand.id}'),
+            onDeletePressed: () {
+              ActionGuard.run(
+                permission: Permission.brandDelete, // use correct enum
+                showDeniedScreen: true,
+                action: () async {
+                  controller.confirmAndDeleteItem(brand);
+                },
+              );
+            },          ))
         ]);
   }
 

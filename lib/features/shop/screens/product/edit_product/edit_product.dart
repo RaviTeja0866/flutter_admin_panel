@@ -11,13 +11,21 @@ class EditProductScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final productId = Get.parameters['id'];
+
+    if (productId == null) {
+      return const Scaffold(
+        body: Center(child: Text('Invalid Product ID')),
+      );
+    }
+
     final controller = Get.put(EditProductController());
-    final product = Get.arguments;
-    controller.initProductData(product);
-    return RSSiteTemplate(
-      desktop: EditProductDesktopScreen(product: product),
-      tablet: EditProductMobileScreen(product: product),
-      mobile: EditProductMobileScreen(product: product),
+    controller.loadProduct(productId);
+
+    return const RSSiteTemplate(
+      desktop: EditProductDesktopScreen(),
+      tablet: EditProductMobileScreen(),
+      mobile: EditProductMobileScreen(),
     );
   }
 }

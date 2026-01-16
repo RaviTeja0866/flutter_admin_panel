@@ -19,7 +19,7 @@ import '../../../../../../utils/device/device_utility.dart';
 import '../../../../../../utils/popups/confirmation_dialog.dart';
 import '../../../../../../utils/popups/full_screen_loader.dart';
 import '../../../../../../utils/popups/loaders.dart';
-import '../../../../../personalization/models/user_model.dart';
+import '../../../../../personalization/models/admin_model.dart';
 import '../../../../controllers/returns/returns_controller.dart';
 
 class ReturnOrderTransactions extends StatelessWidget {
@@ -270,8 +270,7 @@ void _showRefundAuthenticationDialog(
           if (returnOrder.juspayOrderId == null ||
               returnOrder.juspayOrderId!.isEmpty) {
             RSFullScreenLoader.stopLoading();
-            RSLoaders.warningSnackBar(
-              title: "Error",
+            RSLoaders.error(
               message: "Missing Juspay order ID",
             );
             return;
@@ -286,14 +285,12 @@ void _showRefundAuthenticationDialog(
           );
         }
         RSFullScreenLoader.stopLoading();
-        RSLoaders.successSnackBar(
-          title: "Refund Successful",
+        RSLoaders.success(
           message: "Customer refund has been processed",
         );
       } catch (e) {
         RSFullScreenLoader.stopLoading();
-        RSLoaders.warningSnackBar(
-          title: "Authentication Failed",
+        RSLoaders.warning(
           message: e.toString(),
         );
       }

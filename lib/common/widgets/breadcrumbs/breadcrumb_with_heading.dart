@@ -7,12 +7,14 @@ import '../../../utils/constants/sizes.dart';
 import '../texts/page_heading.dart';
 
 class RSBreadcrumbsWithHeading extends StatelessWidget {
-  const RSBreadcrumbsWithHeading(
-      {super.key,
-      required this.heading,
-      required this.breadcrumbItems,
-      this.returnToPreviousScreen =  false,
-      });
+  const RSBreadcrumbsWithHeading({
+    super.key,
+    required this.heading,
+    required this.breadcrumbItems,
+    this.onBack,
+    this.backRoute,
+    this.returnToPreviousScreen = false,
+  });
 
   // The heading For page
   final String heading;
@@ -22,6 +24,12 @@ class RSBreadcrumbsWithHeading extends StatelessWidget {
 
   // flag indicating whether to include a button to return to the previous Screen
   final bool returnToPreviousScreen;
+
+  /// Custom back action (highest priority)
+  final VoidCallback? onBack;
+
+  /// Named route to navigate back to
+  final String? backRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +69,10 @@ class RSBreadcrumbsWithHeading extends StatelessWidget {
                       i == breadcrumbItems.length - 1
                           ? breadcrumbItems[i].capitalize.toString()
                           : Capitalize(breadcrumbItems[i].substring(1)),
-                      style: Theme.of(context).textTheme.bodySmall!.apply(fontWeightDelta: -1),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall!
+                          .apply(fontWeightDelta: -1),
                     ),
                   ),
                 ),
@@ -73,9 +84,27 @@ class RSBreadcrumbsWithHeading extends StatelessWidget {
         // Heading of the Page
         Row(
           children: [
-            if(returnToPreviousScreen) IconButton(onPressed: () => Get.back(), icon: Icon(Iconsax.arrow_left)),
-            if(returnToPreviousScreen) SizedBox(width: RSSizes.spaceBtwItems),
-            RSPageHeading(heading:heading),
+            if (returnToPreviousScreen)
+              IconButton(
+                icon: const Icon(Iconsax.arrow_left),
+                onPressed: () {
+                  if (onBack != null) {
+                    onBack!();
+                  } else if (backRoute != null) {
+                    Get.offNamed(backRoute!);
+                  } else {
+                    // fallback – overlay safe
+                    while (Get.isOverlaysOpen) {
+                      Get.back();
+                    }
+                    if (Get.key.currentState?.canPop() ?? false) {
+                      Get.back();
+                    }
+                  }
+                },
+              ),
+            if (returnToPreviousScreen) SizedBox(width: RSSizes.spaceBtwItems),
+            RSPageHeading(heading: heading),
           ],
         )
       ],

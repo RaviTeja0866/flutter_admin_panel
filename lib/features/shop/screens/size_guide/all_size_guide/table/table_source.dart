@@ -7,6 +7,7 @@ import 'package:roguestore_admin_panel/features/shop/controllers/size_guide/size
 import 'package:roguestore_admin_panel/utils/constants/enums.dart';
 
 import '../../../../../../common/widgets/data_table/table_action_buttons.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
 import '../../../../../../routes/routes.dart';
 import '../../../../../../utils/constants/colors.dart';
 import '../../../../../../utils/constants/sizes.dart';
@@ -52,8 +53,15 @@ class SizeGuideRows extends DataTableSource {
         DataCell(RSTableActionButtons(
           onEditPressed: () =>
               Get.toNamed(RSRoutes.editSizeGuide, arguments: sizeGuide),
-          onDeletePressed: () => controller.confirmAndDeleteItem(sizeGuide),
-        )),
+          onDeletePressed: () {
+            ActionGuard.run(
+              permission: Permission.sizeGuideDelete, // use correct enum
+              showDeniedScreen: true,
+              action: () async {
+                controller.confirmAndDeleteItem(sizeGuide);
+              },
+            );
+          },        )),
       ],
     );
   }

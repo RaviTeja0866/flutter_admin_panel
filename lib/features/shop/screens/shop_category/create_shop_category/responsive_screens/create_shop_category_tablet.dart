@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import 'package:roguestore_admin_panel/features/shop/screens/shop_category/create_shop_category/widgets/create_shop_category_form.dart';
 import 'package:roguestore_admin_panel/routes/routes.dart';
@@ -16,7 +17,17 @@ class CreateShopCategoryTabletScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BreadCrumbs
-              RSBreadcrumbsWithHeading(returnToPreviousScreen: true,heading: 'Create ShopCategory', breadcrumbItems: [RSRoutes.shopCategory, 'Create ShopCategory']),
+              RSBreadcrumbsWithHeading(returnToPreviousScreen: true,
+                  heading: 'Create ShopCategory',
+                  breadcrumbItems: [
+                    RSRoutes.shopCategory,
+                    'Create ShopCategory'
+                  ],
+                onBack: () {
+                  Get.offNamed(RSRoutes.shopCategory);
+                },
+
+              ),
               SizedBox(height: RSSizes.spaceBtwSections),
 
               CreateShopCategoryForm(),

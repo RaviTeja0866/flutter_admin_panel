@@ -6,7 +6,8 @@ import 'package:roguestore_admin_panel/data/repositories/exchange/exchange_repos
 
 import '../../models/order_model.dart';
 import '../../models/exchange_model.dart';
-import '../../../personalization/models/user_model.dart';
+import '../../../personalization/models/admin_model.dart';
+import '../../models/user_model.dart';
 
 class ExchangeDetailController extends GetxController {
   static ExchangeDetailController get instance => Get.find();
@@ -18,7 +19,7 @@ class ExchangeDetailController extends GetxController {
   Rx<OrderModel> order = OrderModel.empty().obs;
 
   final userRepo = UserRepository.instance;
-  final orderRepo = Get.put(OrderRepository());
+  final orderRepo = OrderRepository.instance;
   final exchangeRepo = ExchangeRepository.instance;
 
   /// ----------------------------------------------------------------
@@ -35,7 +36,7 @@ class ExchangeDetailController extends GetxController {
 
       return model;
     } catch (e) {
-      RSLoaders.errorSnackBar(title: "Error", message: e.toString());
+      RSLoaders.error(message: e.toString());
       return null;
     } finally {
       loading.value = false;
@@ -50,16 +51,14 @@ class ExchangeDetailController extends GetxController {
       loading.value = true;
 
       if (exchange.value.userId.isNotEmpty) {
-        customer.value =
-        await userRepo.fetchUserDetails(exchange.value.userId);
+        customer.value = await userRepo.fetchUserDetails(exchange.value.userId);
       }
 
       if (exchange.value.orderId.isNotEmpty) {
-        order.value =
-        (await orderRepo.getOrderById(exchange.value.orderId))!;
+        order.value = (await orderRepo.getOrderById(exchange.value.orderId))!;
       }
     } catch (e) {
-      RSLoaders.errorSnackBar(title: 'Error', message: e.toString());
+      RSLoaders.error(message: e.toString());
     } finally {
       loading.value = false;
     }
@@ -75,8 +74,7 @@ class ExchangeDetailController extends GetxController {
         stepIndex: index,
       );
     } catch (e) {
-      RSLoaders.errorSnackBar(
-          title: 'Timeline Update Error', message: e.toString());
+      RSLoaders.error(message: e.toString());
     }
   }
 }

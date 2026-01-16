@@ -23,144 +23,163 @@ import 'package:roguestore_admin_panel/features/shop/screens/product/edit_produc
 
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../common/widgets/containers/rounded_container.dart';
+import '../../../../../../routes/routes.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import '../../../../../../utils/device/device_utility.dart';
+import '../../../../controllers/product/edit_product_controller.dart';
 import '../../../../controllers/product/product_images_controller.dart';
 import '../widgets/offer_widget.dart';
 import '../widgets/specifications_widget.dart';
 
 class EditProductDesktopScreen extends StatelessWidget {
-  const EditProductDesktopScreen({super.key, required this.product});
-
-  final ProductModel product;
+  const EditProductDesktopScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ProductImagesController());
-    return  Scaffold(
-      bottomNavigationBar: ProductBottomNavigationButtons(product: product),
-      body: SingleChildScrollView(
-        child: Padding(padding: EdgeInsets.all(RSSizes.defaultSpace),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // BreadCrumbs
-            RSBreadcrumbsWithHeading(returnToPreviousScreen: true, heading: 'Update product', breadcrumbItems: ['Update product']),
-            SizedBox(height: RSSizes.spaceBtwSections),
+    final productController = EditProductController.instance;
+    final imagesController = Get.put(ProductImagesController());
 
-            // Create Product
-            Row(
+    return Obx(() {
+      final product = productController.product.value;
+
+      // ⛔ WAIT until product is loaded (refresh-safe)
+      if (product == null) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      return Scaffold(
+        bottomNavigationBar: ProductBottomNavigationButtons(product: product),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(RSSizes.defaultSpace),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: RSDeviceUtils.isTabletScreen(context) ? 2: 3,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                // Breadcrumbs
+                RSBreadcrumbsWithHeading(
+                  returnToPreviousScreen: true,
+                  heading: 'Update Product',
+                  breadcrumbItems: ['Products', 'Update'],
+                  onBack: () {
+                    Get.offNamed(RSRoutes.products);
+                  },
 
-                        RSProductStats(product: product),
-                        SizedBox(height: RSSizes.spaceBtwSections),
+                ),
+                SizedBox(height: RSSizes.spaceBtwSections),
 
-                        // Basic Information
-                        ProductTitleAndDescription(),
-                        SizedBox(height: RSSizes.spaceBtwSections),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // LEFT COLUMN
+                    Expanded(
+                      flex: RSDeviceUtils.isTabletScreen(context) ? 2 : 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          RSProductStats(product: product),
+                          SizedBox(height: RSSizes.spaceBtwSections),
 
-                        // Product specifications section
-                        const RSProductSpecificationsWidget(),
-                        SizedBox(height: RSSizes.spaceBtwSections),
+                          ProductTitleAndDescription(),
+                          SizedBox(height: RSSizes.spaceBtwSections),
 
-                        // Stock & Pricing
-                        RSRoundedContainer(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              //Heading
-                              Text('Stock&Pricing', style: Theme.of(context).textTheme.headlineSmall),
-                              SizedBox(height: RSSizes.spaceBtwItems),
+                          const RSProductSpecificationsWidget(),
+                          SizedBox(height: RSSizes.spaceBtwSections),
 
-                              //ProductType
-                              ProductTypeWidget(),
-                              SizedBox(height: RSSizes.spaceBtwInputFields),
-
-                              //Stock
-                              ProductStockAndPricing(),
-                              SizedBox(height: RSSizes.spaceBtwSections),
-
-                              //Attributes
-                              ProductAttributes(),
-                              SizedBox(height: RSSizes.spaceBtwSections),
-                            ],
+                          // Stock & Pricing
+                          RSRoundedContainer(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Stock & Pricing',
+                                  style:
+                                      Theme.of(context).textTheme.headlineSmall,
+                                ),
+                                SizedBox(height: RSSizes.spaceBtwItems),
+                                ProductTypeWidget(),
+                                SizedBox(height: RSSizes.spaceBtwInputFields),
+                                ProductStockAndPricing(),
+                                SizedBox(height: RSSizes.spaceBtwSections),
+                                ProductAttributes(),
+                              ],
+                            ),
                           ),
-                        ),
-                        SizedBox(height: RSSizes.spaceBtwSections),
+                          SizedBox(height: RSSizes.spaceBtwSections),
 
-                        // Variations
-                        ProductVariations(),
-                      ],
-                    )),
-            SizedBox(width: RSSizes.defaultSpace),
+                          ProductVariations(),
+                        ],
+                      ),
+                    ),
 
-                // SideBar
-                Expanded(
-                    child: Column(
-                      children: [
-                        // Product Thumbnail
-                        ProductThumbnailImage(),
-                        SizedBox(height: RSSizes.spaceBtwSections),
+                    SizedBox(width: RSSizes.defaultSpace),
 
-                        // Product Images
-                        RSRoundedContainer(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('All Product Images',style: Theme.of(context).textTheme.headlineSmall),
-                              SizedBox(height: RSSizes.spaceBtwItems),
-                              ProductAdditionalImages(
-                                additionalProductImagesURLs: controller.additionalProductImageUrls,
-                                onTapToAddImages: () => controller.selectMultipleProductImages(),
-                                onTapToRemoveImage:(index) => controller.removeImage(index),
-                              )
-                            ],
+                    // RIGHT SIDEBAR
+                    Expanded(
+                      child: Column(
+                        children: [
+                          ProductThumbnailImage(),
+                          SizedBox(height: RSSizes.spaceBtwSections),
+
+                          // Additional Images
+                          RSRoundedContainer(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'All Product Images',
+                                  style:
+                                      Theme.of(context).textTheme.headlineSmall,
+                                ),
+                                SizedBox(height: RSSizes.spaceBtwItems),
+                                ProductAdditionalImages(
+                                  additionalProductImagesURLs: imagesController
+                                      .additionalProductImageUrls,
+                                  onTapToAddImages: imagesController
+                                      .selectMultipleProductImages,
+                                  onTapToRemoveImage:
+                                      imagesController.removeImage,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        SizedBox(height: RSSizes.spaceBtwItems),
+                          SizedBox(height: RSSizes.spaceBtwItems),
 
-                        //Product Brand
-                        ProductBrand(),
-                        SizedBox(height: RSSizes.spaceBtwItems),
+                          ProductBrand(),
+                          SizedBox(height: RSSizes.spaceBtwItems),
 
-                        // Product Categories
-                        ProductCategories(product: product),
-                        SizedBox(height: RSSizes.spaceBtwItems),
+                          ProductCategories(product: product),
+                          SizedBox(height: RSSizes.spaceBtwItems),
 
-                        RSTargetAudienceWidget(initialTargetAudience: product.targetAudience),
-                        SizedBox(height: RSSizes.spaceBtwItems),
+                          RSTargetAudienceWidget(
+                            initialTargetAudience: product.targetAudience,
+                          ),
+                          SizedBox(height: RSSizes.spaceBtwItems),
 
-                        RSCouponWidget(product: product),
-                        SizedBox(height: RSSizes.spaceBtwItems),
+                          RSCouponWidget(product: product),
+                          SizedBox(height: RSSizes.spaceBtwItems),
 
-                        RSOfferWidget(product: product),
-                        SizedBox(height: RSSizes.spaceBtwItems),
+                          RSOfferWidget(product: product),
+                          SizedBox(height: RSSizes.spaceBtwItems),
 
-                        //Product Brand
-                        ProductTag(initialTags: [],),
-                        SizedBox(height: RSSizes.spaceBtwItems),
+                          ProductTag(initialTags: product.tags ?? []),
+                          SizedBox(height: RSSizes.spaceBtwItems),
 
-                        // Is Featured widget
-                        IsFeaturedWidget(product: product),
-                        SizedBox(height: RSSizes.spaceBtwItems),
+                          IsFeaturedWidget(product: product),
+                          SizedBox(height: RSSizes.spaceBtwItems),
 
-                        // Product Visibility
-                        ProductVisibilityWidget(),
-                        SizedBox(height: RSSizes.spaceBtwItems),
-
-                      ],
-                    )),
-        ],
-            )
-          ],
+                          ProductVisibilityWidget(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        ),
-      ),
-    );
+      );
+    });
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../routes/routes.dart';
@@ -12,12 +13,19 @@ class CreateBannerTabletScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Padding(padding: EdgeInsets.all(RSSizes.defaultSpace),
+        child: Padding(
+          padding: EdgeInsets.all(RSSizes.defaultSpace),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BreadCrumbs
-              RSBreadcrumbsWithHeading(returnToPreviousScreen: true,heading: 'Create Banner', breadcrumbItems: [RSRoutes.banners, 'Create Banner']),
+              RSBreadcrumbsWithHeading(
+                returnToPreviousScreen: true,
+                heading: 'Create Banner',
+                breadcrumbItems: [RSRoutes.banners, 'Create Banner'],
+                onBack: () {
+                  Get.offNamed(RSRoutes.banners);
+                },),
               SizedBox(height: RSSizes.spaceBtwSections),
 
               CreateBannerForm(),

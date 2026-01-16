@@ -7,6 +7,7 @@ import 'package:url_strategy/url_strategy.dart';
 
 import 'app.dart';
 import 'data/repositories/authentication/authentication_repository.dart';
+import 'features/authentication/controllers/admin_auth_controller.dart';
 
 Future<void> main() async {
   //Ensure the widgets are initialized
@@ -22,6 +23,9 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform).then((value) => Get.put(AuthenticationRepository()));
 
   // Main App Starts Here
+  final auth = Get.put(AdminAuthController(), permanent: true);
+  await auth.restoreSession();
+
 
   runApp(const App());
 }

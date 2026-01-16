@@ -30,6 +30,100 @@ enum ExchangeStatus {
   rejected,
 }
 
+enum Permission {
+
+  dashboardView,
+
+  // Media
+  mediaView,
+  mediaCreate,
+  mediaDelete,
+
+  //Category
+  categoryView,
+  categoryCreate,
+  categoryUpdate,
+  categoryDelete,
+
+  //Banners
+  bannerView,
+  bannerCreate,
+  bannerUpdate,
+  bannerDelete,
+
+  //Brands
+  brandView,
+  brandCreate,
+  brandUpdate,
+  brandDelete,
+
+  //Coupons
+  couponView,
+  couponCreate,
+  couponUpdate,
+  couponDelete,
+
+  //Customer
+  customerDelete,
+  customerView,
+
+  //Shop Category
+  shopCategoryView,
+  shopCategoryCreate,
+  shopCategoryUpdate,
+  shopCategoryDelete,
+
+  //Size Guide
+  sizeGuideView,
+  sizeGuideCreate,
+  sizeGuideUpdate,
+  sizeGuideDelete,
+
+  // Product
+  productCreate,
+  productUpdate,
+  productDelete,
+  productView,
+
+  // Order
+  orderView,
+  orderDelete,
+  orderStatusUpdate,
+  orderCancel,
+
+  //Exchange
+  exchangeView,
+  exchangeDelete,
+  exchangeStatusUpdate,
+
+  // Returns
+  returnView,
+  returnDelete,
+  returnStatusUpdate,
+
+  settingsManage,
+  profileView,
+
+  // Refund
+  refundInitiate,
+  refundApprove,
+
+  // Admin
+  adminCreate,
+  adminUpdate,
+  adminDisable,
+  adminDelete,
+
+  roleAssign,
+  roleCreate,
+  roleDelete,
+
+  // Audit
+  auditView,
+  auditExport,
+}
+
+
 enum ReturnStatus {
   pending,
   approved,

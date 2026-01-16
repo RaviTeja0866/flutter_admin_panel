@@ -38,13 +38,13 @@ class ForgetPasswordController extends GetxController {
       //await checkEmailVerificationStatus();
 
       // Send Email to Reset Password
-      await AuthenticationRepository.instance.sendPasswordResentEmail(email.text.trim());
+      //await AuthenticationRepository.instance.sendPasswordResentEmail(email.text.trim());
 
       // Remove Loader
       RSFullScreenLoader.stopLoading();
 
       // Show Success Screen
-      RSLoaders.successSnackBar(title: 'Email Sent', message: 'Email Link sent to reset password'.tr);
+      RSLoaders.success(message: 'Email Link sent to reset password'.tr);
 
       // Redirect to Reset Password Screen
       //Get.to(() => ResetPasswordScreen(email: email.text.trim()));
@@ -68,17 +68,17 @@ class ForgetPasswordController extends GetxController {
       }
 
       // Send Email to Reset Password
-      await AuthenticationRepository.instance.sendPasswordResentEmail(email);
+     // await AuthenticationRepository.instance.sendPasswordResentEmail(email);
 
       // Remove Loader
       RSFullScreenLoader.stopLoading();
 
       // Show Success Screen
-      RSLoaders.successSnackBar(title: 'Email Sent', message: 'Email Link sent to reset password'.tr);
+      RSLoaders.success(message: 'Email Link sent to reset password'.tr);
     } catch (e) {
       // Remove Loader
       RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Oh Snap', message: e.toString());
+      RSLoaders.error(message: e.toString());
     }
   }
 }

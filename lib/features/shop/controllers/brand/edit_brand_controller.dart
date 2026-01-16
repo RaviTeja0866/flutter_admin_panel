@@ -8,143 +8,193 @@ import 'package:roguestore_admin_panel/features/shop/models/brand_category.dart'
 import 'package:roguestore_admin_panel/features/shop/models/brand_model.dart';
 import 'package:roguestore_admin_panel/utils/helpers/network_manager.dart';
 import 'package:roguestore_admin_panel/utils/popups/full_screen_loader.dart';
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../routes/routes.dart';
+import '../../../../utils/constants/enums.dart';
 import '../../../../utils/popups/loaders.dart';
 import '../../models/category_model.dart';
 
 class EditBrandController extends GetxController {
   static EditBrandController get instance => Get.find();
 
+  final _repository = BrandRepository.instance;
+
+  /// 🔑 SOURCE OF TRUTH
+  final Rxn<BrandModel> brand = Rxn<BrandModel>();
+
   final loading = false.obs;
-  RxString imageURL = ''.obs;
+  final imageURL = ''.obs;
   final isFeatured = false.obs;
   final name = TextEditingController();
   final formKey = GlobalKey<FormState>();
-  final repository = Get.put(BrandRepository());
-  final List<CategoryModel> selectedCategories = <CategoryModel>[].obs;
+  final selectedCategories = <CategoryModel>[].obs;
 
-  // Init Data
-  void init(BrandModel brand) {
-      name.text = brand.name;
-      imageURL.value = brand.image;
-      isFeatured.value = brand.isFeatured;
-      if (brand.brandCategories != null) {
-        selectedCategories.addAll(brand.brandCategories ?? []);
-      }
+  bool _loaded = false;
+
+  // ---------------------------------------------------------------------------
+  // LOAD BRAND BY ID (REFRESH SAFE)
+  // ---------------------------------------------------------------------------
+  Future<void> loadBrand(String brandId) async {
+    if (_loaded) return;
+    _loaded = true;
+
+    loading(true);
+
+    final data = await _repository.getBrandById(brandId);
+    brand.value = data;
+
+    name.text = data.name;
+    imageURL.value = data.image;
+    isFeatured.value = data.isFeatured;
+
+    selectedCategories.clear();
+    if (data.brandCategories != null) {
+      selectedCategories.addAll(data.brandCategories!);
+    }
+
+    loading(false);
   }
 
-  // Toggle Category Selection
+  // ---------------------------------------------------------------------------
+  // TOGGLE CATEGORY
+  // ---------------------------------------------------------------------------
   void toggleSelection(CategoryModel category) {
-      if (selectedCategories.contains(category)) {
-        selectedCategories.remove(category);
-      } else {
-        selectedCategories.add(category);
-      }
+    selectedCategories.contains(category)
+        ? selectedCategories.remove(category)
+        : selectedCategories.add(category);
   }
 
-  // Method to reset Fields
-  void resetFields() {
-      name.clear();
-      loading(false);
-      isFeatured(false);
-      imageURL.value = '';
-      selectedCategories.clear();
-  }
-
-  // Pick Thumbnail Image from Media
+  // ---------------------------------------------------------------------------
+  // PICK IMAGE
+  // ---------------------------------------------------------------------------
   void pickImage() async {
-      final controller = Get.put(MediaController());
-      List<ImageModel>? selectedImages = await controller.selectImagesFromMedia();
+    final controller = Get.put(MediaController());
+    final images = await controller.selectImagesFromMedia();
 
-      if (selectedImages != null && selectedImages.isNotEmpty) {
-        ImageModel selectedImage = selectedImages.first;
-        imageURL.value = selectedImage.url;
-      }
-  }
-
-  // Update new Brand
-  Future<void> updateBrand(BrandModel brand) async {
-    try {
-
-      RSFullScreenLoader.popUpCircular();
-
-      // Check Network Connectivity
-      final isConnected = await NetworkManager.instance.isConnected();
-      if (!isConnected) {
-        RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(title: 'No Internet', message: 'Please check your connection.');
-        return;
-      }
-
-      // Validate Form
-      if (!formKey.currentState!.validate()) {
-        RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(title: 'Oh Snap', message: 'Form validation failed.');
-        return;
-      }
-
-
-      bool isBrandUpdated = false;
-      if (brand.image != imageURL.value || brand.name != name.text.trim() || brand.isFeatured != isFeatured.value) {
-        isBrandUpdated = true;
-
-        brand.image = imageURL.value;
-        brand.name = name.text.trim();
-        brand.isFeatured = isFeatured.value;
-        brand.updatedAt = DateTime.now();
-        await repository.updateBrand(brand);
-      }
-
-      // Update Brand Categories
-      if (selectedCategories.isNotEmpty) await updateBrandCategories(brand);
-
-      // Update Brand in Products
-      if (isBrandUpdated) await updateBrandInProducts(brand);
-
-      // Notify Success
-      BrandController.instance.updateItemFromLists(brand);
-
-      update();
-
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.successSnackBar(title: 'Congratulations', message: 'Brand has been updated successfully.');
-    } catch (e) {
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Oh Snap', message: e.toString());
+    if (images != null && images.isNotEmpty) {
+      imageURL.value = images.first.url;
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // UPDATE BRAND
+  // ---------------------------------------------------------------------------
+  Future<void> updateBrand() async {
+    await ActionGuard.run(
+        permission: Permission.brandUpdate,
+        showDeniedScreen: true,
+        action: () async {
+      try {
+        RSFullScreenLoader.popUpCircular();
 
+        // -----------------------
+        // Network check
+        // -----------------------
+        final isConnected = await NetworkManager.instance.isConnected();
+
+        if (!isConnected) {
+          RSFullScreenLoader.stopLoading();
+          return;
+        }
+
+        // -----------------------
+        // Form validation
+        // -----------------------
+        final isValid = formKey.currentState?.validate() ?? false;
+
+        if (!isValid) {
+          RSFullScreenLoader.stopLoading();
+          return;
+        }
+
+        // -----------------------
+        // Brand object check
+        // -----------------------
+        final item = brand.value;
+        if (item == null) {
+          RSFullScreenLoader.stopLoading();
+          return;
+        }
+
+        // -----------------------
+        // Assign new values
+        // -----------------------
+        item
+          ..name = name.text.trim()
+          ..image = imageURL.value
+          ..isFeatured = isFeatured.value
+          ..updatedAt = DateTime.now();
+
+        // -----------------------
+        // Firestore update
+        // -----------------------
+        await _repository.updateBrand(item);
+
+        // -----------------------
+        // Brand categories
+        // -----------------------
+        await updateBrandCategories(item);
+        print('✅ Brand categories updated');
+
+        // -----------------------
+        // Local state update
+        // -----------------------
+        BrandController.instance.updateItemFromLists(item);
+
+        // -----------------------
+        // Finish
+        // -----------------------
+        RSFullScreenLoader.stopLoading();
+        RSLoaders.success(message: 'Brand updated successfully');
+
+        resetFields();
+
+        Get.offNamed(RSRoutes.brands);
+      } catch (e, stack) {
+        RSFullScreenLoader.stopLoading();
+        print('Error: $e');
+        print('StackTrace: $stack');
+
+        RSLoaders.error(
+          message: e.toString(),
+        );
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // BRAND CATEGORIES
+  // ---------------------------------------------------------------------------
   Future<void> updateBrandCategories(BrandModel brand) async {
+    final existing = await _repository.getCategoriesOfSpecificBrand(brand.id);
+    final selectedIds = selectedCategories.map((e) => e.id).toSet();
 
-      // Fetch all BrandCategories
-      final brandCategories = await repository.getCategoriesOfSpecificBrand(brand.id);
-
-      // SelectCategoryIds
-      final selectedCategoryIds = selectedCategories.map((e) => e.id);
-
-      // Identify Categories to remove
-      final categoriesToRemove = brandCategories.where((existingCategory) => !selectedCategoryIds.contains(existingCategory.categoryId)).toList();
-
-      // Remove Unselected Categories
-      for (var categoryToRemove in categoriesToRemove) {
-        await BrandRepository.instance.deleteBrandCategory(categoryToRemove.id ?? '');
-      }
-
-      // Identify new Categories to add
-      final newCategoriesToAdd = selectedCategories.where((newCategory) => !brandCategories.any((existingCategory) => existingCategory.categoryId == newCategory.id)).toList();
-
-      // Add new Categories
-      for (var newCategory in newCategoriesToAdd) {
-        var brandCategory = BrandCategoryModel(brandId: brand.id, categoryId: newCategory.id);
-        brandCategory.id = await BrandRepository.instance.createBrandCategory(brandCategory);
+    for (final old in existing) {
+      if (!selectedIds.contains(old.categoryId)) {
+        await _repository.deleteBrandCategory(old.id ?? '');
       }
     }
 
-
-  Future<void> updateBrandInProducts(BrandModel brand) async {
-    try {
-      // Your logic for updating the brand in products
-    } catch (e) {
+    for (final category in selectedCategories) {
+      if (!existing.any((e) => e.categoryId == category.id)) {
+        final bc = BrandCategoryModel(
+          brandId: brand.id,
+          categoryId: category.id,
+        );
+        bc.id = await _repository.createBrandCategory(bc);
+      }
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // CLEANUP
+  // ---------------------------------------------------------------------------
+  void resetFields() {
+    name.clear();
+    imageURL.value = '';
+    isFeatured.value = false;
+    selectedCategories.clear();
+    brand.value = null;
+    _loaded = false;
   }
 }

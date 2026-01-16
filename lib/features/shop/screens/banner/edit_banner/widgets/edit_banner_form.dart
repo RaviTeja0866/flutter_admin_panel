@@ -12,14 +12,11 @@ import '../../../../../../utils/constants/image_strings.dart';
 import '../../../../../../utils/constants/sizes.dart';
 
 class EditBannerForm extends StatelessWidget {
-  const EditBannerForm({super.key, required this.banner});
-
-  final BannerModel banner;
+  const EditBannerForm({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(EditBannerController());
-    controller.init(banner);
+    final controller = EditBannerController.instance;
     return RSRoundedContainer(
       width: 500,
       padding: EdgeInsets.all(RSSizes.defaultSpace),
@@ -122,7 +119,7 @@ class EditBannerForm extends StatelessWidget {
               // Button
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(onPressed: () => controller.updateBanner(banner), child: Text('Update')),
+                child: ElevatedButton(onPressed: () => controller.updateBanner(), child: Text('Update')),
               ),
               SizedBox(height: RSSizes.spaceBtwInputFields * 2),
             ],

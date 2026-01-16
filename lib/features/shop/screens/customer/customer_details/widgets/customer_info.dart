@@ -6,7 +6,8 @@ import '../../../../../../utils/constants/colors.dart';
 import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/image_strings.dart';
 import '../../../../../../utils/constants/sizes.dart';
-import '../../../../../personalization/models/user_model.dart';
+import '../../../../../personalization/models/admin_model.dart';
+import '../../../../models/user_model.dart';
 
 class CustomerInfo extends StatelessWidget {
   const CustomerInfo({super.key, required this.customer});

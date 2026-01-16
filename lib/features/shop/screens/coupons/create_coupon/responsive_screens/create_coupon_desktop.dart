@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/features/shop/screens/coupons/create_coupon/widgets/create_coupon_form.dart';
 
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
@@ -12,12 +13,20 @@ class CreateCouponDesktopScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Padding(padding: EdgeInsets.all(RSSizes.defaultSpace),
+        child: Padding(
+          padding: EdgeInsets.all(RSSizes.defaultSpace),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BreadCrumbs
-              RSBreadcrumbsWithHeading(returnToPreviousScreen: true, heading: 'Create Coupon', breadcrumbItems: [RSRoutes.coupons, 'Create Coupon']),
+              RSBreadcrumbsWithHeading(
+                returnToPreviousScreen: true,
+                heading: 'Create Coupon',
+                breadcrumbItems: [RSRoutes.coupons, 'Create Coupon'],
+                onBack: () {
+                  Get.offNamed(RSRoutes.coupons);
+                },
+              ),
               SizedBox(height: RSSizes.spaceBtwSections),
 
               CreateCouponForm(),

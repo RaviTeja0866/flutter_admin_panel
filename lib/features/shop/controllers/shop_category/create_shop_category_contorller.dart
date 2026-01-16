@@ -4,6 +4,9 @@ import 'package:roguestore_admin_panel/data/repositories/shop_category/shop_cate
 import 'package:roguestore_admin_panel/features/shop/controllers/shop_category/shop_category_controller.dart';
 import 'package:roguestore_admin_panel/features/shop/models/shop_category.dart';
 
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../routes/routes.dart';
+import '../../../../utils/constants/enums.dart';
 import '../../../../utils/helpers/network_manager.dart';
 import '../../../../utils/popups/full_screen_loader.dart';
 import '../../../../utils/popups/loaders.dart';
@@ -37,48 +40,55 @@ class CreateShopCategoryController extends GetxController {
 
   // Create Shop Category
   Future<void> createShopCategory() async {
-    try {
-      // Start Loading
-      RSFullScreenLoader.popUpCircular();
+    await ActionGuard.run(
+        permission: Permission.shopCategoryCreate,
+        showDeniedScreen: true,
+        action: () async {
+      try {
+        // Start Loading
+        RSFullScreenLoader.popUpCircular();
 
-      // Check internet connectivity
-      final isConnected = await NetworkManager.instance.isConnected();
-      if (!isConnected) {
+        // Check internet connectivity
+        final isConnected = await NetworkManager.instance.isConnected();
+        if (!isConnected) {
+          RSFullScreenLoader.stopLoading();
+          RSLoaders.error(message: 'Please check your internet connection.');
+          return;
+        }
+
+        // Form Validation
+        if (!formKey.currentState!.validate()) {
+          RSFullScreenLoader.stopLoading();
+          return;
+        }
+
+        // Map data
+        final newRecord = ShopCategory(
+          id: '',
+          title: titleController.text.trim(),
+          type: typeController.text.trim(),
+          imageUrl: imageURL.value,
+          gender: gender.value,
+          active: isActive.value,
+        );
+
+        // Create the shop category in Firestore and get the generated ID
+        newRecord.id =
+        await shopCategoryRepository.createShopCategory(newRecord);
+
+        // Update all data list
+        ShopCategoryController.instance.addItemToLists(newRecord);
+
+        // Stop loading
         RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(title: 'No Connection', message: 'Please check your internet connection.');
-        return;
-      }
 
-      // Form Validation
-      if (!formKey.currentState!.validate()) {
+        // Success message
+        RSLoaders.success(message: 'New Shop Category has been Added');
+        Get.offNamed(RSRoutes.shopCategory);
+      } catch (e) {
         RSFullScreenLoader.stopLoading();
-        return;
+        RSLoaders.error(message: e.toString());
       }
-
-      // Map data
-      final newRecord = ShopCategory(
-        id: '',
-        title: titleController.text.trim(),
-        type: typeController.text.trim(),
-        imageUrl: imageURL.value,
-        gender: gender.value,
-        active: isActive.value,
-      );
-
-      // Create the shop category in Firestore and get the generated ID
-      newRecord.id = await shopCategoryRepository.createShopCategory(newRecord);
-
-      // Update all data list
-      ShopCategoryController.instance.addItemToLists(newRecord);
-
-      // Stop loading
-      RSFullScreenLoader.stopLoading();
-
-      // Success message
-      RSLoaders.successSnackBar(title: 'Congratulations', message: 'New Shop Category has been Added');
-    } catch (e) {
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Oh Snap', message: e.toString());
-    }
+    });
   }
 }

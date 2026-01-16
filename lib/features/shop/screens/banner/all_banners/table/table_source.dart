@@ -7,6 +7,7 @@ import 'package:roguestore_admin_panel/features/shop/controllers/banner/banner_c
 import 'package:roguestore_admin_panel/utils/constants/enums.dart';
 
 import '../../../../../../common/widgets/data_table/table_action_buttons.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
 import '../../../../../../routes/routes.dart';
 import '../../../../../../utils/constants/colors.dart';
 import '../../../../../../utils/constants/sizes.dart';
@@ -18,7 +19,7 @@ class BannersRows extends DataTableSource {
     final banner = controller.filteredItems[index];
     return DataRow2(
         selected: controller.selectedRows[index],
-        onTap: () => Get.toNamed(RSRoutes.editBanner, arguments: banner),
+        onTap: () => Get.toNamed('/editBanner/${banner.id}'),
         onSelectChanged: (value) => controller.selectedRows[index] = value ?? false,
         cells: [
       DataCell(
@@ -35,9 +36,16 @@ class BannersRows extends DataTableSource {
       DataCell(Text(controller.formatRoute(banner.targetScreen))),
       DataCell(banner.active ? Icon(Iconsax.eye, color: RSColors.primary) : Icon(Iconsax.eye_slash)),
       DataCell(RSTableActionButtons(
-        onEditPressed: () => Get.toNamed(RSRoutes.editBanner, arguments: banner),
-        onDeletePressed: () => controller.confirmAndDeleteItem(banner),
-      ))
+        onEditPressed: () => Get.toNamed('/editBanner/${banner.id}'),
+        onDeletePressed: () {
+          ActionGuard.run(
+            permission: Permission.bannerDelete, // use correct enum
+            showDeniedScreen: true,
+            action: () async {
+              controller.confirmAndDeleteItem(banner);
+            },
+          );
+        },      ))
     ]);
   }
 

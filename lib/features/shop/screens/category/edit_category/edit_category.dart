@@ -11,16 +11,12 @@ class EditCategoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final category = Get.arguments;
-    if (category is! CategoryModel) {
-      throw Exception(
-          'Invalid argument: Expected a CategoryModel but got ${category.runtimeType}');
-    }
+    final categoryId = Get.parameters['id']!;
 
     return RSSiteTemplate(
-      desktop: EditCategoryDesktopScreen(category: category),
-      tablet: EditCategoryTabletScreen(category: category),
-      mobile: EditCategoryMobileScreen(category: category),
+      desktop: EditCategoryDesktopScreen(categoryId: categoryId),
+      tablet: EditCategoryTabletScreen(categoryId: categoryId),
+      mobile: EditCategoryMobileScreen(categoryId: categoryId),
     );
   }
 }

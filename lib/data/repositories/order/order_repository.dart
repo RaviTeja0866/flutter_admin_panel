@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -53,15 +54,12 @@ class OrderRepository extends GetxController {
 
       print("🎉 [OrderRepository] Successfully loaded ${orders.length} orders");
       return orders;
-
     } on FirebaseException catch (e) {
       print("❌ FirebaseException: ${e.code} - ${e.message}");
       throw RSFirebaseException(e.code).message;
-
     } on PlatformException catch (e) {
       print("❌ PlatformException: ${e.code} - ${e.message}");
       throw RSPlatformException(e.code).message;
-
     } catch (e) {
       print("❌ Unknown Error: $e");
       throw 'Something went wrong. Please try again';
@@ -81,24 +79,38 @@ class OrderRepository extends GetxController {
     }
   }
 
-  Future<OrderModel?> getOrderById(String orderId) async {
+  Future<OrderModel?> getOrderById(String docId) async {
     try {
-      final doc = await _db.collection('Orders').doc(orderId).get();
-      if (doc.exists) {
-        return OrderModel.fromSnapshot(doc);
+      debugPrint('[OrderRepo] Fetching order by docId: $docId');
+
+      final doc = await _db
+          .collection('Orders') // ✅ FIXED
+          .doc(docId)
+          .get();
+
+      if (!doc.exists) {
+        debugPrint('[OrderRepo] ❌ Order not found for docId: $docId');
+        return null;
       }
-      return null;
+
+      debugPrint('[OrderRepo] ✅ Order fetched: ${doc.id}');
+      return OrderModel.fromSnapshot(doc);
     } on FirebaseException catch (e) {
+      debugPrint('[OrderRepo] FirebaseException: ${e.code}');
       throw RSFirebaseException(e.code).message;
     } on PlatformException catch (e) {
+      debugPrint('[OrderRepo] PlatformException: ${e.code}');
       throw RSPlatformException(e.code).message;
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('[OrderRepo] ❌ Unknown error: $e');
+      debugPrintStack(stackTrace: stack);
       throw 'Something went wrong. Please try again';
     }
   }
 
   // Update Specific value of an order
-  Future<void> updateOrderSpecificValue(String orderId, Map<String, dynamic> data) async {
+  Future<void> updateOrderSpecificValue(
+      String orderId, Map<String, dynamic> data) async {
     try {
       await _db.collection('Orders').doc(orderId).update(data);
     } on FirebaseException catch (e) {
@@ -164,7 +176,8 @@ class OrderRepository extends GetxController {
           print('[JUSPAY] Refund successful');
           return jsonResponse['data'];
         } else {
-          throw Exception('Refund failed: ${jsonResponse['error'] ?? "Unknown error"}');
+          throw Exception(
+              'Refund failed: ${jsonResponse['error'] ?? "Unknown error"}');
         }
       } else {
         throw Exception('Refund request failed: ${response.body}');
@@ -174,5 +187,4 @@ class OrderRepository extends GetxController {
       throw Exception('Refund process failed: $e');
     }
   }
-
 }

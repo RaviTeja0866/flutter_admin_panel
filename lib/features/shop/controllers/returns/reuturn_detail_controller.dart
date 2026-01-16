@@ -7,7 +7,8 @@ import 'package:roguestore_admin_panel/data/repositories/returns/return_reposito
 
 import '../../models/return_model.dart';
 import '../../models/order_model.dart';
-import '../../../personalization/models/user_model.dart';
+import '../../../personalization/models/admin_model.dart';
+import '../../models/user_model.dart';
 
 class ReturnDetailController extends GetxController {
   static ReturnDetailController get instance => Get.find();
@@ -39,7 +40,7 @@ class ReturnDetailController extends GetxController {
 
       return model;
     } catch (e) {
-      RSLoaders.errorSnackBar(title: "Error", message: e.toString());
+      RSLoaders.error(message: e.toString());
       return null;
     } finally {
       loading.value = false;
@@ -67,7 +68,7 @@ class ReturnDetailController extends GetxController {
       }
 
     } catch (e) {
-      RSLoaders.errorSnackBar(title: "Error", message: e.toString());
+      RSLoaders.error(message: e.toString());
     } finally {
       loading.value = false;
     }
@@ -86,8 +87,8 @@ class ReturnDetailController extends GetxController {
         timestampField: timestampField,
       );
     } catch (e) {
-      RSLoaders.errorSnackBar(
-          title: 'Timeline Update Error', message: e.toString());
+      RSLoaders.error(
+           message: e.toString());
     }
   }
 }

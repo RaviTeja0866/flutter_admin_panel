@@ -9,61 +9,90 @@ import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/constants/colors.dart';
 
 import '../../../../../../common/widgets/data_table/table_action_buttons.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
 import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 
 class CategoryRows extends DataTableSource {
   final controller = CategoryController.instance;
+
   @override
   DataRow? getRow(int index) {
-    if (index >= controller.filteredItems.length) {
-      return null;
-    }
+    if (index >= controller.filteredItems.length) return null;
+
     final category = controller.filteredItems[index];
     final parentCategory = controller.allItems.firstWhereOrNull(
           (item) => item.id == category.parentId,
     );
-   return DataRow2(
-     selected: controller.selectedRows[index],
-      onSelectChanged: (value) => controller.selectedRows[index] = value ?? false,
+
+    return DataRow2(
+      selected: controller.selectedRows[index],
+      onSelectChanged: (value) =>
+      controller.selectedRows[index] = value ?? false,
+      onTap: () => Get.toNamed(
+        RSRoutes.editCategory.replaceFirst(':id', category.id),
+      ),
       cells: [
-       DataCell(
-           Row(
-             children: [
-               RSRoundedImage(
-                 width: 50,
-                 height: 50,
-                 padding: RSSizes.sm,
-                 image: category.image,
-                 imageType: ImageType.network,
-                 borderRadius: RSSizes.borderRadiusMd,
-                 backgroundColor: RSColors.primaryBackground,
-               ),
-               SizedBox(width: RSSizes.spaceBtwItems),
-               Expanded(child: Text(
-                 category.name,
-                 style: Theme.of(Get.context!).textTheme.bodyLarge!.apply(color: RSColors.primary),
-                 maxLines: 2,
-                 overflow: TextOverflow.ellipsis,
-               ))
-             ],
-           )
-       ),
-        DataCell(Text(parentCategory !=null  ? parentCategory.name : '')),
-        DataCell(category.isFeatured ? Icon(Iconsax.heart5, color: RSColors.primary) : Icon(Iconsax.heart)),
+        DataCell(
+          Row(
+            children: [
+              RSRoundedImage(
+                width: 50,
+                height: 50,
+                padding: RSSizes.sm,
+                image: category.image,
+                imageType: ImageType.network,
+                borderRadius: RSSizes.borderRadiusMd,
+                backgroundColor: RSColors.primaryBackground,
+              ),
+              SizedBox(width: RSSizes.spaceBtwItems),
+              Expanded(
+                child: Text(
+                  category.name,
+                  style: Theme.of(Get.context!)
+                      .textTheme
+                      .bodyLarge!
+                      .apply(color: RSColors.primary),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+        DataCell(Text(parentCategory?.name ?? '')),
+        DataCell(
+          category.isFeatured
+              ? Icon(Iconsax.heart5, color: RSColors.primary)
+              : const Icon(Iconsax.heart),
+        ),
         DataCell(
           Text(
-              category.updatedAt != null
-                  ? DateFormat('yyyy-MM-dd hh:mm:ss a').format(category.updatedAt!)
-                  : (category.createdAt != null ? DateFormat('yyyy-MM-dd hh:mm:ss a').format(category.createdAt!) : '')
+            category.updatedAt != null
+                ? DateFormat('yyyy-MM-dd hh:mm:ss a')
+                .format(category.updatedAt!)
+                : category.createdAt != null
+                ? DateFormat('yyyy-MM-dd hh:mm:ss a')
+                .format(category.createdAt!)
+                : '',
           ),
         ),
         DataCell(
           RSTableActionButtons(
-            onEditPressed: () =>Get.toNamed(RSRoutes.editCategory, arguments: category),
-            onDeletePressed: () => controller.confirmAndDeleteItem(category),
-          )
-        )
+            onEditPressed: () => Get.toNamed(
+              RSRoutes.editCategory.replaceFirst(':id', category.id),
+            ),
+            onDeletePressed: () {
+              ActionGuard.run(
+                permission: Permission.categoryDelete, // use correct enum
+                showDeniedScreen: true,
+                action: () async {
+                  controller.confirmAndDeleteItem(category);
+                },
+              );
+            },
+          ),
+        ),
       ],
     );
   }
@@ -72,10 +101,8 @@ class CategoryRows extends DataTableSource {
   bool get isRowCountApproximate => false;
 
   @override
-
   int get rowCount => controller.filteredItems.length;
 
   @override
   int get selectedRowCount => 0;
-
 }

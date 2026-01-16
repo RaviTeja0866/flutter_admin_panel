@@ -6,7 +6,9 @@ import 'package:roguestore_admin_panel/features/shop/screens/product/all_product
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../common/widgets/containers/rounded_container.dart';
 import '../../../../../../common/widgets/data_table/table_header.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
 import '../../../../../../routes/routes.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import '../../../../../../utils/popups/loader_animation.dart';
 
@@ -15,7 +17,7 @@ class ProductDesktopScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ProductController());
+    final controller = ProductController.instance;
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
@@ -24,29 +26,43 @@ class ProductDesktopScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BreadCrumbs
-              RSBreadcrumbsWithHeading(heading: 'Products', breadcrumbItems: ['Products']),
+              RSBreadcrumbsWithHeading(
+                  heading: 'Products', breadcrumbItems: ['Products']),
               SizedBox(height: RSSizes.spaceBtwSections),
 
               // Table Body
-              Obx( () {
-                //Show Loader
-                if(controller.isLoading.value)  return RSLoaderAnimation();
+              Obx(
+                () {
+                  //Show Loader
+                  if (controller.isLoading.value) return RSLoaderAnimation();
 
-                 return RSRoundedContainer(
-                  child: Column(
-                    children: [
-                      RSTableHeader(buttonText: 'Add Product', onPressed: () => Get.toNamed(RSRoutes.createProduct), searchOnChanged: (query) => controller.searchQuery(query),),
-                      SizedBox(height: RSSizes.spaceBtwItems),
+                  return RSRoundedContainer(
+                    child: Column(
+                      children: [
+                        RSTableHeader(
+                          searchOnChanged: (query) => controller.searchQuery(query),
 
-                      // Table
-                     ProductTable(),
-                    ],
-                  ),
-                );},
+                          primaryButton: AdminScreenGuard(
+                            permission: Permission.productCreate,
+                            behavior: GuardBehavior.disable,
+                            child: ElevatedButton(
+                              onPressed: () => Get.toNamed(RSRoutes.createProduct),
+                              child: const Text('Add Product'),
+                            ),
+                          ),
+
+                        ),
+                        SizedBox(height: RSSizes.spaceBtwItems),
+
+                        // Table
+                        ProductTable(),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),
-
         ),
       ),
     );

@@ -13,6 +13,8 @@ class RSTableHeader extends StatelessWidget {
     this.searchOnChanged,
     this.showLeftWidget = true,
     this.showSecondButton = false,
+    this.primaryButton,
+    this.secondaryButton,
   });
 
   final Function()? onPressed;
@@ -23,6 +25,9 @@ class RSTableHeader extends StatelessWidget {
   final bool showSecondButton;               // new
   final TextEditingController? searchController;
   final Function(String)? searchOnChanged;
+  final Widget? primaryButton;
+  final Widget? secondaryButton;
+
 
   @override
   Widget build(BuildContext context) {
@@ -30,30 +35,32 @@ class RSTableHeader extends StatelessWidget {
       children: [
         Expanded(
           flex: RSDeviceUtils.isDesktopScreen(context) ? 3 : 1,
-          child: showLeftWidget
-              ? Row(
-            children: [
-              SizedBox(
-                width: 200,
-                child: ElevatedButton(
-                  onPressed: onPressed,
-                  child: Text(buttonText),
-                ),
-              ),
-
-              if (showSecondButton) const SizedBox(width: 8),
-
-              if (showSecondButton)
+            child: showLeftWidget
+                ? Row(
+              children: [
                 SizedBox(
                   width: 200,
-                  child: ElevatedButton(
-                    onPressed: secondButtonOnPressed,
-                    child: Text(secondButtonText),
-                  ),
+                  child: primaryButton ??
+                      ElevatedButton(
+                        onPressed: onPressed,
+                        child: Text(buttonText),
+                      ),
                 ),
-            ],
-          )
-              : const SizedBox.shrink(),
+
+                if (showSecondButton) const SizedBox(width: 8),
+
+                if (showSecondButton)
+                  SizedBox(
+                    width: 200,
+                    child: secondaryButton ??
+                        ElevatedButton(
+                          onPressed: secondButtonOnPressed,
+                          child: Text(secondButtonText),
+                        ),
+                  ),
+              ],
+            )
+                : const SizedBox.shrink(),
         ),
 
         Expanded(

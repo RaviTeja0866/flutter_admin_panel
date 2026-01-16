@@ -11,133 +11,146 @@ import '../../../../../../utils/constants/image_strings.dart';
 import '../../../../../../utils/constants/sizes.dart';
 
 class OrderCustomer extends StatelessWidget {
-  const OrderCustomer ({super.key, required this.order});
-
-  final OrderModel order;
+  const OrderCustomer({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(OrderDetailController());
-    controller.order.value = order;
-    controller.getCustomerOffCurrentOrder();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Personal Info
-        RSRoundedContainer(
-          padding: EdgeInsets.all(RSSizes.defaultSpace),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Customer',  style: Theme.of(context).textTheme.headlineMedium),
-              SizedBox(height: RSSizes.spaceBtwSections),
-              Obx(
-                () {
-                    return Row(
-                      children: [
-                        RSRoundedImage(
-                          padding: 0,
-                          backgroundColor: RSColors.primaryBackground,
-                          image: controller.customer.value.profilePicture
-                              .isNotEmpty ? controller.customer.value
-                              .profilePicture : RSImages.user,
-                          imageType: controller.customer.value.profilePicture
-                              .isNotEmpty ? ImageType.network : ImageType.asset,
-                        ),
-                        SizedBox(width: RSSizes.spaceBtwItems),
+    final controller = OrderDetailController.instance;
 
-                        Expanded(child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(controller.customer.value.fullName,
-                              style: Theme
-                                  .of(context)
-                                  .textTheme
-                                  .headlineMedium, overflow: TextOverflow
-                                  .ellipsis, maxLines: 1,),
-                            Text(controller.customer.value.email,
-                                overflow: TextOverflow.ellipsis, maxLines: 1),
-                          ],
-                        ))
+    return Obx(() {
+      final order = controller.currentOrder.value;
+      final customer = controller.customer.value;
 
-                      ],
-                    );
-                  },
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: RSSizes.spaceBtwSections),
+      if (order == null) {
+        return const SizedBox.shrink();
+      }
 
-        // Contact Info
-        Obx(
-          () => SizedBox(
-            width: double.infinity,
-            child: RSRoundedContainer(
-              padding: EdgeInsets.all(RSSizes.defaultSpace),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Contact person', style: Theme.of(context).textTheme.headlineMedium),
-                  SizedBox(height: RSSizes.spaceBtwSections),
-                  Text(controller.customer.value.fullName, style: Theme.of(context).textTheme.titleSmall),
-                  SizedBox(height: RSSizes.spaceBtwSections / 2),
-                  Text(controller.customer.value.email, style: Theme.of(context).textTheme.titleSmall),
-                  SizedBox(height: RSSizes.spaceBtwSections / 2),
-                  Text(controller.customer.value.phoneNumber, style: Theme.of(context).textTheme.titleSmall),
-                  SizedBox(height: RSSizes.spaceBtwSections / 2),
-                ],
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: RSSizes.spaceBtwSections),
-
-        // Shipping Address
-
-          SizedBox(
-            width: double.infinity,
-            child: RSRoundedContainer(
-              padding: EdgeInsets.all(RSSizes.defaultSpace),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Shipping Address', style: Theme.of(context).textTheme.headlineMedium),
-                  SizedBox(height: RSSizes.spaceBtwSections),
-                  Text(order.shippingAddress != null ? order.shippingAddress!.fullName : '', style: Theme.of(context).textTheme.titleSmall),
-                  SizedBox(height: RSSizes.spaceBtwSections / 2),
-                  Text(order.shippingAddress != null ? order.shippingAddress!.toString() : '', style: Theme.of(context).textTheme.titleSmall),
-                  SizedBox(height: RSSizes.spaceBtwSections / 2),
-                  Text(order.shippingAddress != null ? order.shippingAddress!.phoneNumber : '', style: Theme.of(context).textTheme.titleSmall),
-                  SizedBox(height: RSSizes.spaceBtwSections / 2),
-                ],
-              ),
-            ),
-          ),
-        SizedBox(height: RSSizes.spaceBtwSections),
-
-        // Billing Address
-        SizedBox(
-          width: double.infinity,
-          child: RSRoundedContainer(
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ---------------- CUSTOMER INFO ----------------
+          RSRoundedContainer(
             padding: EdgeInsets.all(RSSizes.defaultSpace),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Billing Address', style: Theme.of(context).textTheme.headlineMedium),
+                Text(
+                  'Customer',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
                 SizedBox(height: RSSizes.spaceBtwSections),
-                Text(order.billingAddressSameShipping ? order.shippingAddress!.fullName : order.billingAddress!.fullName, style: Theme.of(context).textTheme.titleSmall),
-                SizedBox(height: RSSizes.spaceBtwSections / 2),
-                Text(order.billingAddressSameShipping ? order.shippingAddress!.toString() : order.billingAddress!.toString(), style: Theme.of(context).textTheme.titleSmall),
-                SizedBox(height: RSSizes.spaceBtwSections / 2),
-                Text(order.billingAddressSameShipping ? order.shippingAddress!.phoneNumber : order.billingAddress!.phoneNumber, style: Theme.of(context).textTheme.titleSmall),
-                SizedBox(height: RSSizes.spaceBtwSections / 2),
+
+                Row(
+                  children: [
+                    RSRoundedImage(
+                      padding: 0,
+                      backgroundColor: RSColors.primaryBackground,
+                      image: customer.profilePicture.isNotEmpty
+                          ? customer.profilePicture
+                          : RSImages.user,
+                      imageType: customer.profilePicture.isNotEmpty
+                          ? ImageType.network
+                          : ImageType.asset,
+                    ),
+                    SizedBox(width: RSSizes.spaceBtwItems),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            customer.fullName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          Text(
+                            customer.email,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-        ),
-      ],
-    );
+
+          SizedBox(height: RSSizes.spaceBtwSections),
+
+          // ---------------- CONTACT INFO ----------------
+          RSRoundedContainer(
+            padding: EdgeInsets.all(RSSizes.defaultSpace),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Contact Person',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                SizedBox(height: RSSizes.spaceBtwSections),
+                Text(customer.fullName),
+                Text(customer.email),
+                Text(customer.phoneNumber),
+              ],
+            ),
+          ),
+
+          SizedBox(height: RSSizes.spaceBtwSections),
+
+          // ---------------- SHIPPING ADDRESS ----------------
+          RSRoundedContainer(
+            padding: EdgeInsets.all(RSSizes.defaultSpace),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Shipping Address',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                SizedBox(height: RSSizes.spaceBtwSections),
+                Text(order.shippingAddress?.fullName ?? ''),
+                Text(order.shippingAddress?.toString() ?? ''),
+                Text(order.shippingAddress?.phoneNumber ?? ''),
+              ],
+            ),
+          ),
+
+          SizedBox(height: RSSizes.spaceBtwSections),
+
+          // ---------------- BILLING ADDRESS ----------------
+          RSRoundedContainer(
+            padding: EdgeInsets.all(RSSizes.defaultSpace),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Billing Address',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                SizedBox(height: RSSizes.spaceBtwSections),
+                Text(
+                  order.billingAddressSameShipping
+                      ? order.shippingAddress?.fullName ?? ''
+                      : order.billingAddress?.fullName ?? '',
+                ),
+                Text(
+                  order.billingAddressSameShipping
+                      ? order.shippingAddress?.toString() ?? ''
+                      : order.billingAddress?.toString() ?? '',
+                ),
+                Text(
+                  order.billingAddressSameShipping
+                      ? order.shippingAddress?.phoneNumber ?? ''
+                      : order.billingAddress?.phoneNumber ?? '',
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
   }
 }

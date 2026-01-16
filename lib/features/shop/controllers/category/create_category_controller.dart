@@ -4,9 +4,12 @@ import 'package:roguestore_admin_panel/data/repositories/category/category_repos
 import 'package:roguestore_admin_panel/features/media/controllers/media_controller.dart';
 import 'package:roguestore_admin_panel/features/media/models/image_model.dart';
 import 'package:roguestore_admin_panel/features/shop/controllers/category/category_controller.dart';
+import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/helpers/network_manager.dart';
 import 'package:roguestore_admin_panel/utils/popups/full_screen_loader.dart';
 
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../utils/constants/enums.dart';
 import '../../../../utils/popups/loaders.dart';
 import '../../models/category_model.dart';
 
@@ -26,54 +29,57 @@ class CreateCategoryController extends GetxController {
   // Create Category
   // -------------------------
   Future<void> createCategory() async {
-    try {
-      RSFullScreenLoader.popUpCircular();
+    await ActionGuard.run(
+        permission: Permission.categoryCreate,
+        showDeniedScreen: true,
+        action: () async {
+      try {
+        RSFullScreenLoader.popUpCircular();
 
-      // Check internet
-      final isConnected = await NetworkManager.instance.isConnected();
-      if (!isConnected) {
+        // Check internet
+        final isConnected = await NetworkManager.instance.isConnected();
+        if (!isConnected) {
+          RSFullScreenLoader.stopLoading();
+          return;
+        }
+
+        // Validate form
+        if (!formKey.currentState!.validate()) {
+          RSFullScreenLoader.stopLoading();
+          return;
+        }
+
+        final categoryName = name.text.trim();
+        final generatedSlug = _generateSlug(categoryName);
+
+        final newRecord = CategoryModel(
+          id: '',
+          name: categoryName,
+          slug: generatedSlug,
+          image: imageURL.value,
+          parentId: selectedParent.value.id,
+          isFeatured: isFeatured.value,
+          createdAt: DateTime.now(),
+        );
+
+        // Save to Firestore
+        newRecord.id =
+        await CategoryRepository.instance.createCategory(newRecord);
+
+        // Update local lists
+        CategoryController.instance.addItemToLists(newRecord);
+
+        // Reset
+        resetFields();
+
         RSFullScreenLoader.stopLoading();
-        return;
-      }
-
-      // Validate form
-      if (!formKey.currentState!.validate()) {
+        RSLoaders.success(message: 'New category has been added');
+        Get.offNamed(RSRoutes.categories);
+      } catch (e) {
         RSFullScreenLoader.stopLoading();
-        return;
+        RSLoaders.error(message: e.toString());
       }
-
-      final categoryName = name.text.trim();
-      final generatedSlug = _generateSlug(categoryName);
-
-      final newRecord = CategoryModel(
-        id: '',
-        name: categoryName,
-        slug: generatedSlug,
-        image: imageURL.value,
-        parentId: selectedParent.value.id,
-        isFeatured: isFeatured.value,
-        createdAt: DateTime.now(),
-      );
-
-      // Save to Firestore
-      newRecord.id =
-      await CategoryRepository.instance.createCategory(newRecord);
-
-      // Update local lists
-      CategoryController.instance.addItemToLists(newRecord);
-
-      // Reset
-      resetFields();
-
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.successSnackBar(
-        title: 'Congratulations',
-        message: 'New category has been added.',
-      );
-    } catch (e) {
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Oh Snap', message: e.toString());
-    }
+    });
   }
 
   // -------------------------

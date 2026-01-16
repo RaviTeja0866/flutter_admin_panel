@@ -29,8 +29,7 @@ class AuditLogController extends RSBaseController<AuditLogModel> {
       final items = await _auditLogRepository.fetchAuditLogs();
       return items;
     } catch (e) {
-      RSLoaders.warningSnackBar(
-        title: 'Error',
+      RSLoaders.warning(
         message: 'Failed to load audit logs.',
       );
       rethrow;

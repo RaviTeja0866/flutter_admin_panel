@@ -3,11 +3,16 @@ import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/data/repositories/coupon/coupon_repository.dart';
 import 'package:roguestore_admin_panel/features/shop/models/coupon_model.dart';
 
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../routes/routes.dart';
+import '../../../../utils/constants/enums.dart';
 import '../../../../utils/helpers/network_manager.dart';
 import '../../../../utils/popups/loaders.dart';
 
 class EditCouponController extends GetxController {
   static EditCouponController get instance => Get.find();
+
+  final _repo = CouponRepository.instance;
 
   final loading = false.obs;
   final isActive = false.obs;
@@ -27,30 +32,9 @@ class EditCouponController extends GetxController {
   final expiryDate = DateTime.now().obs;
   var offerTerms = <String>[].obs;
   final formKey = GlobalKey<FormState>();
+  bool _loaded = false;
 
-  // Initialize Coupon
-  void initCoupon(CouponModel coupon) {
-     code.text = coupon.title;
-
-      if (coupon.discountType == 'percentage') {
-        discountAmount.clear();
-        discountPercentage.text = coupon.discountValue.toString();
-      } else {
-        discountAmount.text = coupon.discountValue.toString();
-      }
-
-      minimumPurchase.text = coupon.minimumPurchase.toString();
-      discountAmount.text = coupon.discountValue.toString();
-      isActive.value = coupon.status;
-
-      offerTerms.clear(); // Clear existing terms first
-      offerTerms.addAll(coupon.terms);
-
-      startDate.value = coupon.startDate;
-      expiryDate.value = coupon.endDate;
-      startDateController.text = coupon.formattedStartDate;
-      endDateController.text = coupon.formattedEndDate;
-  }
+  final Rxn<CouponModel> coupon = Rxn<CouponModel>();
 
   // Format DateTime to String
   String formatDate(DateTime date) {
@@ -67,11 +51,13 @@ class EditCouponController extends GetxController {
     );
     if (picked != null) {
       startDate.value = picked; // Use `.value` to update the Rx variable
-      startDateController.text = "${picked.toLocal()}".split(' ')[0]; // Display date in the text field
+      startDateController.text =
+          "${picked.toLocal()}".split(' ')[0]; // Display date in the text field
 
       // Set expiry date to one day after the selected start date
       expiryDate.value = picked.add(Duration(days: 1));
-      endDateController.text = "${expiryDate.value.toLocal()}".split(' ')[0]; // Display updated expiry date
+      endDateController.text = "${expiryDate.value.toLocal()}"
+          .split(' ')[0]; // Display updated expiry date
     }
   }
 
@@ -85,80 +71,91 @@ class EditCouponController extends GetxController {
     );
     if (picked != null) {
       expiryDate.value = picked; // Use `.value` to update the Rx variable
-      endDateController.text = "${picked.toLocal()}".split(' ')[0]; // Display date in the text field
+      endDateController.text =
+          "${picked.toLocal()}".split(' ')[0]; // Display date in the text field
     }
   }
 
-
   void addTerm() {
-      if (termsController.text.isNotEmpty) {
-        offerTerms.add(termsController.text);
-        termsController.clear();
-      } else {
-      }
+    if (termsController.text.isNotEmpty) {
+      offerTerms.add(termsController.text);
+      termsController.clear();
+    } else {}
   }
 
   void removeTerm(int index) {
-      offerTerms.removeAt(index);
+    offerTerms.removeAt(index);
   }
-  // Update Coupon
 
-  Future<void> updateCoupon(CouponModel coupon) async {
-    try {
-      loading(true);
+  // ---------------------------------------------------------------------------
+  // LOAD COUPON BY ID (REFRESH SAFE)
+  // ---------------------------------------------------------------------------
+  Future<void> loadCoupon(String couponId) async {
+    if (_loaded) return;
+    _loaded = true;
 
-      final isConnected = await NetworkManager.instance.isConnected();
+    loading(true);
 
-      if (!isConnected) {
-        loading(false);
-        RSLoaders.errorSnackBar(
-          title: 'No Internet',
-          message: 'Please check your internet connection.',
-        );
-        return;
+    final data = await _repo.getCouponById(couponId);
+    coupon.value = data;
+
+    // Init fields
+    code.text = data.title;
+    discountType.value = data.discountType;
+    isActive.value = data.status;
+
+    discountAmount.text =
+        data.discountType == 'flat' ? data.discountValue.toString() : '';
+    discountPercentage.text =
+        data.discountType == 'percentage' ? data.discountValue.toString() : '';
+
+    minimumPurchase.text = data.minimumPurchase.toString();
+
+    offerTerms
+      ..clear()
+      ..addAll(data.terms);
+
+    startDate.value = data.startDate;
+    expiryDate.value = data.endDate;
+    startDateController.text = data.formattedStartDate;
+    endDateController.text = data.formattedEndDate;
+
+    loading(false);
+  }
+
+  // ---------------------------------------------------------------------------
+  // UPDATE COUPON
+  // ---------------------------------------------------------------------------
+  Future<void> updateCoupon() async {
+    await ActionGuard.run(
+        permission: Permission.couponUpdate,
+        showDeniedScreen: true,
+        action: () async {
+      try {
+        if (!formKey.currentState!.validate()) return;
+
+        final item = coupon.value!;
+        item
+          ..title = code.text.trim()
+          ..discountType = discountType.value
+          ..discountValue = double.tryParse(discountAmount.text) ??
+              double.tryParse(discountPercentage.text) ??
+              0
+          ..minimumPurchase = double.tryParse(minimumPurchase.text) ?? 0
+          ..status = isActive.value
+          ..terms = offerTerms.toList()
+          ..startDate = startDate.value
+          ..endDate = expiryDate.value
+          ..updatedAt = DateTime.now();
+
+        await _repo.updateCoupon(item);
+
+        RSLoaders.success(message: 'Coupon updated successfully');
+        Get.offNamed(RSRoutes.coupons);
+      } catch (e) {
+        RSLoaders.error(message: e.toString());
       }
-
-      if (formKey.currentState == null || !formKey.currentState!.validate()) {
-        loading(false);
-        RSLoaders.errorSnackBar(
-          title: 'Validation Failed',
-          message: 'Please fill in all required fields correctly.',
-        );
-        return;
-      }
-
-
-      // Map Data
-      coupon.title = code.text.trim();
-      coupon.discountType = discountType.value;
-      coupon.discountValue = double.tryParse(discountAmount.text) ??
-          double.tryParse(discountPercentage.text) ?? 0.0;
-      coupon.minimumPurchase = double.tryParse(minimumPurchase.text) ?? 0.0;
-      coupon.status = isActive.value;
-      coupon.terms = offerTerms.toList(); // Use offerTerms directly instead of splitting termsController
-      coupon.startDate = startDate.value;
-      coupon.endDate = expiryDate.value;
-      coupon.updatedAt = DateTime.now();
-
-
-      await CouponRepository.instance.updateCoupon(coupon);
-
-      RSLoaders.successSnackBar(
-        title: 'Success',
-        message: 'Coupon updated successfully.',
-      );
-
-      resetFields();
-
-    } catch (e) {
-      loading(false);
-      RSLoaders.errorSnackBar(
-        title: 'Error',
-        message: e.toString(),
-      );
-    } finally {
-      loading(false);
-    }
+    });
   }
 
   // Reset Fields

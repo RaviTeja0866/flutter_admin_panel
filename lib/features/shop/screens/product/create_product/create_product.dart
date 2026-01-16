@@ -16,3 +16,10 @@ class CreateProductScreen extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
+

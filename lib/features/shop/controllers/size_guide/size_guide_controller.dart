@@ -7,7 +7,7 @@ import 'package:roguestore_admin_panel/features/shop/models/size_guide_model.dar
 class SizeGuideController extends RSBaseController<SizeGuideModel> {
   static SizeGuideController get instance => Get.find();
 
-  final _sizeGuideRepository = Get.put(SizeGuideRepository());
+  final _sizeGuideRepository = SizeGuideRepository.instance;
 
   @override
   bool containsSearchQuery(SizeGuideModel item, String query) {

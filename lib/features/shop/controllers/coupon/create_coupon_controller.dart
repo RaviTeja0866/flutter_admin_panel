@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../data/repositories/coupon/coupon_repository.dart';
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../utils/constants/enums.dart';
 import '../../../../utils/helpers/network_manager.dart';
 import '../../../../utils/popups/full_screen_loader.dart';
 import '../../../../utils/popups/loaders.dart';
@@ -22,7 +24,7 @@ class CreateCouponController extends GetxController {
   final startDateController = TextEditingController();
   final endDateController = TextEditingController();
 
-  final couponRepository = Get.put(CouponRepository());
+  final couponRepository = CouponRepository.instance;
 
   // Reactive variables
   var isActive = false.obs;
@@ -80,54 +82,63 @@ class CreateCouponController extends GetxController {
   }
 
   Future<void> createCoupon() async {
-    try {
-      RSFullScreenLoader.popUpCircular();
+    await ActionGuard.run(
+        permission: Permission.couponCreate,
+        showDeniedScreen: true,
+        action: () async {
+      try {
+        RSFullScreenLoader.popUpCircular();
 
-      final isConnected = await NetworkManager.instance.isConnected();
-      if (!isConnected) {
+        final isConnected = await NetworkManager.instance.isConnected();
+        if (!isConnected) {
+          RSFullScreenLoader.stopLoading();
+          return;
+        }
+
+
+        if (code.text
+            .trim()
+            .isEmpty || discountAmount.text
+            .trim()
+            .isEmpty || startDate.value == null || endDate.value == null) {
+          RSFullScreenLoader.stopLoading();
+          RSLoaders.error(message: 'Please fill all required fields.');
+          return;
+        }
+
+        if (startDate.value!.isAfter(endDate.value!)) {
+          RSFullScreenLoader.stopLoading();
+          RSLoaders.error(message: 'Start date cannot be after expiry date.');
+          return;
+        }
+
+        final newCoupon = CouponModel(
+          id: '',
+          title: code.text,
+          discountType: discountType.value,
+          discountValue: discountType.value == 'percentage'
+              ? double.tryParse(discountPercentage.text) ?? 0.0
+              : double.tryParse(discountAmount.text) ?? 0.0,
+          minimumPurchase: double.tryParse(minimumPurchase.text) ?? 0.0,
+          startDate: DateTime.parse(startDateController.text),
+          endDate: DateTime.parse(endDateController.text),
+          terms: offerTerms.toList(),
+          // Changed from termsController.text.split(',') to offerTerms.toList()
+          status: isActive.value,
+        );
+
+
+        final couponId = await couponRepository.createCoupon(newCoupon);
+        newCoupon.id = couponId;
+
+        resetFields();
         RSFullScreenLoader.stopLoading();
-        return;
-      }
-
-
-      if (code.text.trim().isEmpty || discountAmount.text.trim().isEmpty || startDate.value == null || endDate.value == null) {
+        RSLoaders.success(message: 'Coupon created successfully.');
+      } catch (e) {
         RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(title: 'Validation Error', message: 'Please fill all required fields.');
-        return;
+        RSLoaders.error(message: e.toString());
       }
-
-      if (startDate.value!.isAfter(endDate.value!)) {
-        RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(title: 'Date Error', message: 'Start date cannot be after expiry date.');
-        return;
-      }
-
-      final newCoupon = CouponModel(
-        id: '',
-        title: code.text,
-        discountType: discountType.value,
-        discountValue: discountType.value == 'percentage'
-            ? double.tryParse(discountPercentage.text) ?? 0.0
-            : double.tryParse(discountAmount.text) ?? 0.0,
-        minimumPurchase: double.tryParse(minimumPurchase.text) ?? 0.0,
-        startDate: DateTime.parse(startDateController.text),
-        endDate: DateTime.parse(endDateController.text),
-        terms: offerTerms.toList(), // Changed from termsController.text.split(',') to offerTerms.toList()
-        status: isActive.value,
-      );
-
-
-      final couponId = await couponRepository.createCoupon(newCoupon);
-      newCoupon.id = couponId;
-
-      resetFields();
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.successSnackBar(title: 'Success', message: 'Coupon created successfully.');
-
-    } catch (e) {
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Error', message: e.toString());
-    }
+    });
   }
 
   void resetFields() {

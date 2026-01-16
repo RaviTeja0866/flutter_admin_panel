@@ -11,7 +11,8 @@ class OrderController extends RSBaseController<OrderModel> {
 
   RxBool statusLoader = false.obs;
   var orderStatus = OrderStatus.delivered.obs;
-  final _orderRepository = Get.put(OrderRepository());
+  final _orderRepository = OrderRepository.instance;
+
 
   @override
   Future<List<OrderModel>> fetchItems() async {
@@ -21,7 +22,7 @@ class OrderController extends RSBaseController<OrderModel> {
       final items = await _orderRepository.getAllOrders();
       return items;
     } catch (e) {
-      RSLoaders.warningSnackBar(title: 'Error', message: 'Failed to load orders. Please try again.');
+      RSLoaders.warning(message: 'Failed to load orders. Please try again.');
       rethrow;
     } finally {
       isLoading.value = false; // Stop loading
@@ -69,13 +70,11 @@ class OrderController extends RSBaseController<OrderModel> {
       // Refresh table lists
       updateItemFromLists(order);
 
-      RSLoaders.successSnackBar(
-        title: 'Updated',
+      RSLoaders.success(
         message: 'Order Status Updated',
       );
     } catch (e) {
-      RSLoaders.warningSnackBar(
-        title: 'Oh Snap!',
+      RSLoaders.warning(
         message: e.toString(),
       );
     } finally {

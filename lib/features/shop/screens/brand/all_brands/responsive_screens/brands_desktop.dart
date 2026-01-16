@@ -7,6 +7,8 @@ import 'package:roguestore_admin_panel/utils/popups/loader_animation.dart';
 
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../common/widgets/data_table/table_header.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import '../table/data_table.dart';
 
@@ -32,9 +34,18 @@ class BrandsDesktopScreen extends StatelessWidget {
                 children: [
                   // Table Header
                   RSTableHeader(
-                      buttonText: 'Create New Brand',
-                      onPressed: () => Get.toNamed(RSRoutes.createBrand),
-                      searchOnChanged: (query) =>controller.searchQuery(query)),
+                    searchOnChanged: (query) => controller.searchQuery(query),
+
+                    primaryButton: AdminScreenGuard(
+                      permission: Permission.brandCreate,
+                      behavior: GuardBehavior.disable,
+                      child: ElevatedButton(
+                        onPressed: () => Get.toNamed(RSRoutes.createBrand),
+                        child: const Text('Create New Brand'),
+                      ),
+                    ),
+
+                  ),
                   SizedBox(height: RSSizes.spaceBtwItems),
 
                   // Table

@@ -3,12 +3,14 @@ import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/features/media/controllers/media_controller.dart';
 import 'package:roguestore_admin_panel/features/shop/models/size_guide_model.dart';
 import '../../../../data/repositories/size_guide/size_guide_repository.dart';
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../utils/constants/enums.dart';
 import '../../../media/models/image_model.dart';
 
 class CreateSizeGuideController extends GetxController {
   static CreateSizeGuideController get instance => Get.find();
 
-  final SizeGuideRepository _sizeGuideRepo = Get.put(SizeGuideRepository());
+  final _sizeGuideRepo = SizeGuideRepository.instance;
 
   final formKey = GlobalKey<FormState>();
   final TextEditingController garmentTypeController = TextEditingController();
@@ -68,9 +70,14 @@ class CreateSizeGuideController extends GetxController {
 
   // Save size guide to Firestore
   Future<void> saveSizeGuide() async {
+    await ActionGuard.run(
+        permission: Permission.sizeGuideCreate,
+        showDeniedScreen: true,
+        action: () async {
     if (formKey.currentState!.validate()) {
       final sizeGuide = SizeGuideModel(
-        id: '', // Firestore will generate this when creating a new document
+        id: '',
+        // Firestore will generate this when creating a new document
         garmentType: garmentTypeController.text.trim(),
         measurementUnit: measurementUnitController.text.trim(),
         sizes: sizes.toList(),
@@ -87,5 +94,6 @@ class CreateSizeGuideController extends GetxController {
         Get.snackbar('Error', e.toString());
       }
     }
+  });
   }
 }

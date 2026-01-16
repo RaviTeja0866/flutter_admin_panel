@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:roguestore_admin_panel/common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
-import 'package:roguestore_admin_panel/features/media/controllers/media_controller.dart';
-import 'package:roguestore_admin_panel/features/media/screens/media/widgets/media_content.dart';
-import 'package:roguestore_admin_panel/features/media/screens/media/widgets/media_uploader.dart';
-import 'package:roguestore_admin_panel/routes/routes.dart';
-
+import '../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
+import '../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
+import '../../../../../routes/routes.dart';
+import '../../../../../utils/constants/enums.dart';
 import '../../../../../utils/constants/sizes.dart';
+import '../../../controllers/media_controller.dart';
+import '../widgets/media_content.dart';
+import '../widgets/media_uploader.dart';
 
 class MediaDesktopScreen extends StatelessWidget {
   const MediaDesktopScreen({super.key});
@@ -22,7 +24,6 @@ class MediaDesktopScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               // Header
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -30,26 +31,39 @@ class MediaDesktopScreen extends StatelessWidget {
                 children: [
                   // BreadCrumbs
                   RSBreadcrumbsWithHeading(
-                    heading: 'Media',
-                    breadcrumbItems: [RSRoutes.login, 'Media Screen']),
-                  SizedBox(
-                    width: RSSizes.buttonWidth * 1.5,
-                    child: ElevatedButton.icon(
-                      onPressed:() => controller.showImagesUploaderSection.value = !controller.showImagesUploaderSection.value,
-                      icon: Icon(Iconsax.cloud_add),
-                      label: Text('Upload Images'),
+                      heading: 'Media',
+                      breadcrumbItems: [RSRoutes.media, 'Media Screen']),
+                  AdminScreenGuard(
+                    permission: Permission.mediaCreate, // or mediaUpload
+                    behavior: GuardBehavior.disable,
+                    child: SizedBox(
+                      width: RSSizes.buttonWidth * 1.5,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          ActionGuard.check(
+                            showDeniedScreen: true,
+                            permission: Permission.mediaCreate,
+                          ) &&
+                              (controller.showImagesUploaderSection.value =
+                              !controller.showImagesUploaderSection.value);
+                        },
+                        icon: const Icon(Iconsax.cloud_add),
+                        label: const Text('Upload Images'),
+                      ),
                     ),
                   ),
                 ],
               ),
               SizedBox(height: RSSizes.spaceBtwSections),
-
+        
               // Upload Area
               MediaUploader(),
-
+        
               // Media
-              MediaContent(allowSelection: false, allowMultipleSelection: false),
-
+              MediaContent(
+                allowSelection: false,
+                allowMultipleSelection: false,
+              ),
             ],
           ),
         ),

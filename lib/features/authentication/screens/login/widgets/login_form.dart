@@ -5,8 +5,10 @@ import 'package:roguestore_admin_panel/features/authentication/controllers/login
 import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/validators/validation.dart';
 
+import '../../../../../utils/constants/image_strings.dart';
 import '../../../../../utils/constants/sizes.dart';
 import '../../../../../utils/constants/text_strings.dart';
+import '../../../../../utils/popups/full_screen_loader.dart';
 
 class RSLoginForm extends StatelessWidget {
   const RSLoginForm({
@@ -76,8 +78,31 @@ class RSLoginForm extends StatelessWidget {
               //Sign In Button
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(onPressed: () => controller.emailAndPasswordSignIn(), child: Text(RSTexts.signIn)),
-                //child: ElevatedButton(onPressed: () => controller.registerAdmin(), child: Text(RSTexts.signIn)),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    RSFullScreenLoader.openLoadingDialog(
+                      'Logging in Admin',
+                      RSImages.docerAnimation,
+                    );
+
+                    try {
+                      await controller.login();
+                      RSFullScreenLoader.stopLoading();
+                      Get.offNamed(RSRoutes.dashboard);
+                    } catch (e) {
+                      RSFullScreenLoader.stopLoading();
+
+                      if (Get.overlayContext != null) {
+                        Get.snackbar(
+                          'Login failed',
+                          e.toString(),
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      }
+                    }
+                  },
+                  child: Text(RSTexts.signIn),
+                )
               )
             ],
           ),

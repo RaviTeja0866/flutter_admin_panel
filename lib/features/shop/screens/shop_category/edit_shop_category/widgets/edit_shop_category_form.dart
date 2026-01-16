@@ -16,8 +16,7 @@ class EditShopCategoryForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(EditShopCategoryController());
-    controller.init(shopCategory);
+    final controller = EditShopCategoryController.instance;
     return RSRoundedContainer(
       width: 500,
       padding: EdgeInsets.all(RSSizes.defaultSpace),
@@ -97,7 +96,7 @@ class EditShopCategoryForm extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => controller.updateShopCategory(shopCategory),
+                onPressed: () => controller.updateShopCategory(),
                 child: Text('Update'),
               ),
             ),

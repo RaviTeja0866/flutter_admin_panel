@@ -7,7 +7,9 @@ import 'package:roguestore_admin_panel/features/shop/controllers/order/order_con
 import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/helpers/helper_functions.dart';
 
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
 import '../../../../../../utils/constants/colors.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 
 class OrderRows extends DataTableSource {
@@ -18,19 +20,29 @@ class OrderRows extends DataTableSource {
     final order = controller.filteredItems[index];
 
     return DataRow2(
-      onTap: () => Get.toNamed(
-        '${RSRoutes.orderDetails}/${order.docId}',
-        arguments: order,
-      ),
+      // ✅ USE docId
+      onTap: () {
+        if (order.docId.isEmpty) {
+          debugPrint('❌ docId is empty');
+          return;
+        }
+
+        Get.toNamed(
+          '/orders-details/${order.docId}',
+        );
+      },
+
       selected: controller.selectedRows[index],
-      onSelectChanged: (value) => controller.selectedRows[index] = value ?? false,
+      onSelectChanged: (value) =>
+      controller.selectedRows[index] = value ?? false,
       cells: [
         DataCell(
           Text(
-            order.id,
-            style: Theme.of(Get.context!).textTheme.bodyLarge!.apply(
-              color: RSColors.primary,
-            ),
+            order.id, // 👈 still show order number in UI
+            style: Theme.of(Get.context!)
+                .textTheme
+                .bodyLarge!
+                .apply(color: RSColors.primary),
           ),
         ),
         DataCell(Text(order.formattedOrderDate)),
@@ -43,11 +55,13 @@ class OrderRows extends DataTableSource {
               horizontal: RSSizes.md,
             ),
             backgroundColor:
-            RSHelperFunctions.getOrderStatusColor(order.status).withOpacity(0.1),
+            RSHelperFunctions.getOrderStatusColor(order.status)
+                .withOpacity(0.1),
             child: Text(
-              order.status.name.capitalize.toString(),
+              order.status.name.capitalize!,
               style: TextStyle(
-                color: RSHelperFunctions.getOrderStatusColor(order.status),
+                color:
+                RSHelperFunctions.getOrderStatusColor(order.status),
               ),
             ),
           ),
@@ -58,10 +72,17 @@ class OrderRows extends DataTableSource {
             view: true,
             edit: false,
             onViewPressed: () => Get.toNamed(
-              '${RSRoutes.orders}/${order.docId}',
-              arguments: order,
+              '${RSRoutes.orderDetails}/${order.docId}', // ✅ FIXED
             ),
-            onDeletePressed: () => controller.confirmAndDeleteItem(order),
+            onDeletePressed: () {
+              ActionGuard.run(
+                permission: Permission.orderDelete, // use correct enum
+                showDeniedScreen: true,
+                action: () async {
+                  controller.confirmAndDeleteItem(order);
+                },
+              );
+            },
           ),
         ),
       ],

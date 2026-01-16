@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:roguestore_admin_panel/features/personalization/models/user_model.dart';
+import 'package:roguestore_admin_panel/features/personalization/models/admin_model.dart';
 import 'package:roguestore_admin_panel/features/shop/controllers/customer/customer_detail_controller.dart';
 
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../routes/routes.dart';
 import '../../../../../../utils/constants/sizes.dart';
+import '../../../../models/user_model.dart';
 import '../widgets/customer_info.dart';
 import '../widgets/customer_orders.dart';
 import '../widgets/shipping_address.dart';
@@ -21,12 +22,20 @@ class CustomerDetailsDesktopScreen extends StatelessWidget {
     controller.customer.value = customer;
     return Scaffold(
       body: SingleChildScrollView(
-        child: Padding(padding: EdgeInsets.all(RSSizes.defaultSpace),
+        child: Padding(
+          padding: EdgeInsets.all(RSSizes.defaultSpace),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BreadCrumbs
-              RSBreadcrumbsWithHeading(returnToPreviousScreen: true, heading: customer.fullName, breadcrumbItems: [RSRoutes.customers, 'Details']),
+              RSBreadcrumbsWithHeading(
+                  returnToPreviousScreen: true,
+                  heading: customer.fullName,
+                  breadcrumbItems: [RSRoutes.customers, 'Details'],
+                onBack: () {
+                  Get.offNamed(RSRoutes.customers);
+                },
+              ),
               SizedBox(height: RSSizes.spaceBtwSections),
 
               // Body
@@ -34,7 +43,8 @@ class CustomerDetailsDesktopScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Left side Customer Information
-                  Expanded(child: Column(
+                  Expanded(
+                      child: Column(
                     children: [
                       // Customer info
                       CustomerInfo(customer: customer),
@@ -47,7 +57,7 @@ class CustomerDetailsDesktopScreen extends StatelessWidget {
                   SizedBox(width: RSSizes.spaceBtwSections),
 
                   // Right side Customer Orders
-                  Expanded(flex: 2,child: CustomerOrders())
+                  Expanded(flex: 2, child: CustomerOrders())
                 ],
               )
             ],

@@ -7,7 +7,7 @@ import '../../../../data/abstract/base_data_table_controlller.dart';
 class BannerController extends RSBaseController<BannerModel>{
   static BannerController get instance => Get.find();
 
-  final _bannerRepository = Get.put(BannerRepository());
+  final _bannerRepository = BannerRepository.instance;
 
   @override
   Future<void> deleteItem(BannerModel item) async{

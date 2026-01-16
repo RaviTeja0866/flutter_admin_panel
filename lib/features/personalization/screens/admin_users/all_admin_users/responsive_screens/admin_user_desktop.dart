@@ -9,7 +9,7 @@ import '../../../../../../routes/routes.dart';
 import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import '../../../../../../utils/popups/loader_animation.dart';
-import '../../../../controllers/adminroles_controller.dart';
+import '../../../../controllers/admin_users/adminroles_controller.dart';
 import '../table/data_table.dart';
 
 class AdminUsersDesktopScreen extends StatelessWidget {
@@ -26,28 +26,27 @@ class AdminUsersDesktopScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --------------------------------------------------
-              // Breadcrumbs (same pattern)
-              // --------------------------------------------------
+              // ------------------------
+              // Breadcrumbs
+              // ------------------------
               RSBreadcrumbsWithHeading(
-                heading: 'Roles & Permissions',
-                breadcrumbItems: ['Roles & Permissions'],
+                heading: 'AdminUsers',
+                breadcrumbItems: ['AdminUsers'],
                 returnToPreviousScreen: true,
-                onBack: () => Get.offNamed(RSRoutes.rolesAndPermissions),
+                onBack: () => Get.offNamed(RSRoutes.adminUser),
               ),
 
               SizedBox(height: RSSizes.spaceBtwSections),
 
-              // --------------------------------------------------
-              // Table Container (IDENTICAL to Customers)
-              // --------------------------------------------------
+              // -------------------------
+              // Table Container
+              // --------------------------
               RSRoundedContainer(
                 child: Column(
                   children: [
                     // Table Header
                     RSTableHeader(
                       searchOnChanged: (query) => controller.searchQuery(query),
-
                       primaryButton: AdminScreenGuard(
                         permission: Permission.adminCreate,
                         behavior: GuardBehavior.disable,
@@ -55,15 +54,6 @@ class AdminUsersDesktopScreen extends StatelessWidget {
                           onPressed: () =>
                               Get.toNamed(RSRoutes.createAdminUser),
                           child: const Text('Create User'),
-                        ),
-                      ),
-                      showSecondButton: true, // enable
-                      secondaryButton: AdminScreenGuard(
-                        permission: Permission.sizeGuideCreate,
-                        behavior: GuardBehavior.disable,
-                        child: ElevatedButton(
-                          onPressed: () => Get.toNamed(RSRoutes.createRole),
-                          child: const Text('Create Role'),
                         ),
                       ),
                     ),

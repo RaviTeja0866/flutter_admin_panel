@@ -11,6 +11,8 @@ import 'package:roguestore_admin_panel/utils/constants/enums.dart';
 import 'package:roguestore_admin_panel/utils/constants/sizes.dart';
 
 import '../../../../../common/widgets/images/rs_rounded_image.dart';
+import '../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
 import '../../../../../utils/constants/colors.dart';
 import '../../../../../utils/constants/image_strings.dart';
 import '../../../../../utils/popups/loader_animation.dart';
@@ -31,13 +33,13 @@ class MediaContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool  loadedPreviousSelection = false;
+    bool loadedPreviousSelection = false;
     final controller = MediaController.instance;
+
     return RSRoundedContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Media Images Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -45,7 +47,7 @@ class MediaContent extends StatelessWidget {
                 children: [
                   Text('Select Folder',
                       style: Theme.of(context).textTheme.headlineSmall),
-                  SizedBox(width: RSSizes.spaceBtwItems),
+                  const SizedBox(width: RSSizes.spaceBtwItems),
                   MediaFolderDropdown(
                     onChanged: (MediaCategory? newValue) {
                       if (newValue != null) {
@@ -59,105 +61,93 @@ class MediaContent extends StatelessWidget {
               if (allowSelection) buildAddSelectedImagesButton(),
             ],
           ),
+
+
           SizedBox(height: RSSizes.spaceBtwSections),
 
-          // Show Media
-          Obx(
-            () {
-              // Get Selected Folder Images
-              List<ImageModel> images = _getSelectedFolderImages(controller);
+          Obx(() {
+            final images = _getSelectedFolderImages(controller);
 
-              // Load Selected Images from the Already Selected Images only once otherwise
-              // on Obx() rebuild UI first images will be selected then auto Un check.
-              if(loadedPreviousSelection){
-                if (alreadySelectedUrls != null && alreadySelectedUrls!.isNotEmpty) {
-                  // convert alreadySelectedUrls to set for faster lookup
-                  final selectedUrlsSet = Set<String>.from(alreadySelectedUrls!);
+            // Initial loading
+            if (controller.loading.value && images.isEmpty) {
+              return const RSLoaderAnimation();
+            }
 
-                  for (var image in images) {
-                    image.isSelected.value = selectedUrlsSet.contains(image.url);
-                    if (image.isSelected.value) {
-                      selectedImages.add(image);
-                    }
-                  }
-                } else {
-                  // if alreadySelectedUrls is null or empty, set all images to not selected
-                  for (var image in images) {
-                    image.isSelected.value = false;
-                  }
-                }
-                loadedPreviousSelection = true;
-              }
+            // Empty state
+            if (images.isEmpty) {
+              return _buildEmptyAnimationWidget(context);
+            }
 
-
-              // Loader
-              if (controller.loading.value && images.isEmpty) return const RSLoaderAnimation();
-
-              // Empty Widget
-              if (images.isEmpty) return _buildEmptyAnimationWidget(context);
-
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    alignment: WrapAlignment.start,
-                    spacing: RSSizes.spaceBtwItems / 2,
-                    runSpacing: RSSizes.spaceBtwItems / 2,
-                    children: images
-                        .map((image) => GestureDetector(
-                              onTap: () => Get.dialog(ImagePopup(image: image)),
-                              child: SizedBox(
-                                width: 140,
-                                height: 180,
-                                child: Column(
-                                  children: [
-                                    allowSelection
-                                        ? _buildListWithCheckbox(image)
-                                        : _buildSimpleList(image),
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: RSSizes.sm),
-                                        child: Text(image.filename,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// GRID
+                Wrap(
+                  spacing: RSSizes.spaceBtwItems / 2,
+                  runSpacing: RSSizes.spaceBtwItems / 2,
+                  children: images.map((image) {
+                    return GestureDetector(
+                      onTap: () => Get.dialog(ImagePopup(image: image)),
+                      child: SizedBox(
+                        width: 140,
+                        height: 180,
+                        child: Column(
+                          children: [
+                            allowSelection
+                                ? _buildListWithCheckbox(image)
+                                : _buildSimpleList(image),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: RSSizes.sm),
+                              child: Text(
+                                image.filename,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ))
-                        .toList(),
-                  ),
-
-                  // Load More Media Button
-                  if (!controller.loading.value)
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                          vertical: RSSizes.spaceBtwSections),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: RSSizes.buttonWidth,
-                            child: ElevatedButton.icon(
-                              onPressed: () => controller.loadMoreMediaImages(),
-                              label: Text('Load More'),
-                              icon: Icon(Iconsax.arrow_down),
                             ),
-                          )
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                ],
-              );
-            },
-          ),
+                    );
+                  }).toList(),
+                ),
+
+                /// LOAD MORE
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: RSSizes.spaceBtwSections,
+                  ),
+                  child: Center(
+                    child: controller.loading.value
+                        ? const CircularProgressIndicator()
+                        : OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: RSColors.primary, // text + icon color
+                        side: BorderSide(
+                          color: RSColors.primary,
+                          width: 1.2,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: controller.loadMoreMediaImages,
+                      child: const Text('Load More'),
+                    )
+
+                  ),
+                ),
+              ],
+            );
+          }),
         ],
       ),
     );
   }
+
 
   List<ImageModel> _getSelectedFolderImages(MediaController controller) {
     List<ImageModel> images = [];
@@ -256,22 +246,39 @@ class MediaContent extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // close Button
         SizedBox(
           width: 120,
           child: OutlinedButton.icon(
-              label: Text('Close'),
-              icon: Icon(Iconsax.close_circle),
-              onPressed: () => Get.back()),
+            label: const Text('Close'),
+            icon: const Icon(Iconsax.close_circle),
+            onPressed: () {
+              onImageSelected?.call([]);
+            },
+          ),
         ),
         SizedBox(width: RSSizes.spaceBtwItems),
-        SizedBox(
-          width: 120,
-          child: ElevatedButton.icon(
-              label: Text('Add'),
-              icon: Icon(Iconsax.image),
-              onPressed: () => Get.back(result: selectedImages)),
-        )
+
+        AdminScreenGuard(
+          permission: Permission.mediaCreate,
+          behavior: GuardBehavior.disable, // 🚫 cursor only
+          child: SizedBox(
+            width: 120,
+            child: ElevatedButton.icon(
+              label: const Text('Add'),
+              icon: const Icon(Iconsax.image),
+              onPressed: () {
+                ActionGuard.run(
+                  permission: Permission.mediaCreate,
+                  action: () async {
+                    onImageSelected?.call(
+                      List<ImageModel>.from(selectedImages),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ),
       ],
     );
   }

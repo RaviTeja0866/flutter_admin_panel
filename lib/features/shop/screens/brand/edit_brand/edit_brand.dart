@@ -6,6 +6,7 @@ import 'package:roguestore_admin_panel/features/shop/screens/brand/edit_brand/re
 import 'package:roguestore_admin_panel/features/shop/screens/brand/edit_brand/responsive_screens/edit_brand_tablet.dart';
 
 
+import '../../../controllers/brand/edit_brand_controller.dart';
 import '../../../models/brand_model.dart';
 
 class EditBrandScreen extends StatelessWidget {
@@ -13,15 +14,16 @@ class EditBrandScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brand = Get.arguments;
-    print('Get.arguments: $brand');
-    if (brand is! BrandModel) {
-      throw Exception(
-          'Invalid argument: Expected a BrandModel but got ${brand.runtimeType}');
-    }
+    final brandId = Get.parameters['id']!;
+
+    // ✅ LOAD BRAND ONCE
+    final controller = Get.put(EditBrandController());
+    controller.loadBrand(brandId);
+
     return RSSiteTemplate(
-        desktop: EditBrandDesktopScreen(brand: brand),
-        tablet: EditBrandTabletScreen(brand: brand),
-        mobile: EditBrandMobileScreen(brand: brand));
+      desktop: const EditBrandDesktopScreen(),
+      tablet: const EditBrandTabletScreen(),
+      mobile: const EditBrandMobileScreen(),
+    );
   }
 }

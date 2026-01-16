@@ -12,6 +12,8 @@ import 'package:roguestore_admin_panel/utils/constants/sizes.dart';
 import 'package:roguestore_admin_panel/utils/device/device_utility.dart';
 import 'package:roguestore_admin_panel/utils/popups/loaders.dart';
 
+import '../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+
 class ImagePopup extends StatelessWidget {
 
   // The Image Model to display detailed information about.
@@ -50,7 +52,8 @@ class ImagePopup extends StatelessWidget {
                       ),
                     ),
                     // Close Icon button positioned at the top-right corner
-                    Positioned(top: 0, right: 0, child: IconButton(onPressed: ()=> Get.back(), icon: const Icon(Iconsax.close_circle)))
+                    Positioned(top: 0, right: 0, child: IconButton(onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Iconsax.close_circle)))
                   ],
                 ),
               ),
@@ -72,7 +75,7 @@ class ImagePopup extends StatelessWidget {
                 children: [
                   Expanded(child: Text('Image Url:', style: Theme.of(context).textTheme.bodyLarge)),
                   Expanded(flex: 2, child: Text(image.url, style:Theme.of(context).textTheme.titleLarge, maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  Expanded(child: OutlinedButton(onPressed: () {FlutterClipboard.copy(image.url).then((value) => RSLoaders.customToast(message:'URL Copied'));},
+                  Expanded(child: OutlinedButton(onPressed: () {FlutterClipboard.copy(image.url).then((value) => RSLoaders.info(message:'URL Copied'));},
                       child: Text('Copy URL')))
                 ],
               ),
@@ -83,10 +86,24 @@ class ImagePopup extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
-                    width:300,
-                    child: TextButton(onPressed: () => MediaController.instance.removeCloudImageConfirmation(image),
-                        child: Text('Delete Image', style: TextStyle(color: Colors.red))),
-                  )
+                    width: 300,
+                    child: TextButton(
+                      onPressed: () {
+                        ActionGuard.run(
+                          permission: Permission.mediaDelete, // 🔐 define this permission
+                          showDeniedScreen: true,
+                          action: () async {
+                            MediaController.instance
+                                .removeCloudImageConfirmation(image);
+                          },
+                        );
+                      },
+                      child: const Text(
+                        'Delete Image',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ),
                 ],
               )
             ],

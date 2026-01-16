@@ -7,7 +7,9 @@ import 'package:roguestore_admin_panel/features/shop/controllers/returns/returns
 import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/helpers/helper_functions.dart';
 
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
 import '../../../../../../utils/constants/colors.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 
 class ReturnRows extends DataTableSource {
@@ -82,8 +84,15 @@ class ReturnRows extends DataTableSource {
               '${RSRoutes.returns}/${item.id}',
               arguments: item,
             ),
-            onDeletePressed: () =>
-                controller.confirmAndDeleteItem(item),
+            onDeletePressed: () {
+              ActionGuard.run(
+                permission: Permission.returnDelete, // use correct enum
+                showDeniedScreen: true,
+                action: () async {
+                  controller.confirmAndDeleteItem(item);
+                },
+              );
+            },
           ),
         ),
       ],

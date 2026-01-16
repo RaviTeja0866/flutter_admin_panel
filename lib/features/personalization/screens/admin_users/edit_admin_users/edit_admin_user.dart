@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class EditRolesPermissionsScreen extends StatelessWidget {
-  const EditRolesPermissionsScreen({super.key});
+class EditAdminUserScreen extends StatelessWidget {
+  const EditAdminUserScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

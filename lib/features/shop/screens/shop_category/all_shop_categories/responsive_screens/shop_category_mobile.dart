@@ -9,6 +9,9 @@ import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/constants/sizes.dart';
 import 'package:roguestore_admin_panel/utils/popups/loader_animation.dart';
 
+import '../../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
+import '../../../../../../utils/constants/enums.dart';
+
 class ShopCategoryMobileScreen extends StatelessWidget {
   const ShopCategoryMobileScreen({super.key});
 
@@ -33,7 +36,19 @@ class ShopCategoryMobileScreen extends StatelessWidget {
                 return RSRoundedContainer(
                   child: Column(
                     children: [
-                      RSTableHeader(buttonText: 'Create New ShopCategory', onPressed: () => Get.toNamed(RSRoutes.createShopCategory)),
+                      RSTableHeader(
+                        searchOnChanged: (query) => controller.searchQuery(query),
+
+                        primaryButton: AdminScreenGuard(
+                          permission: Permission.shopCategoryCreate,
+                          behavior: GuardBehavior.disable,
+                          child: ElevatedButton(
+                            onPressed: () => Get.toNamed(RSRoutes.createShopCategory),
+                            child: const Text('Create New ShopCategory'),
+                          ),
+                        ),
+
+                      ),
                       SizedBox(height: RSSizes.spaceBtwItems),
 
                       // Table

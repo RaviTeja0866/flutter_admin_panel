@@ -7,6 +7,9 @@ import 'package:roguestore_admin_panel/features/shop/controllers/banner/banner_c
 import 'package:roguestore_admin_panel/features/shop/models/banner_model.dart';
 
 import '../../../../common/widgets/appScreen/app_screen.dart';
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../routes/routes.dart';
+import '../../../../utils/constants/enums.dart';
 import '../../../../utils/helpers/network_manager.dart';
 import '../../../../utils/popups/full_screen_loader.dart';
 import '../../../../utils/popups/loaders.dart';
@@ -33,7 +36,7 @@ class CreateBannerController extends GetxController {
   final startDateController = TextEditingController();
   final endDateController = TextEditingController();
 
-  final bannerRepo = Get.put(BannerRepository());
+  final bannerRepo = BannerRepository.instance;
   final bannerController = Get.put(BannerController());
 
   // Pick Thumbnail Image from Media
@@ -60,8 +63,7 @@ class CreateBannerController extends GetxController {
     if (picked != null) {
       startDate.value = picked;
       startDateController.text = "${picked.toLocal()}".split(' ')[0];
-    } else {
-    }
+    } else {}
   }
 
   Future<void> selectExpiryDate(BuildContext context) async {
@@ -74,69 +76,88 @@ class CreateBannerController extends GetxController {
     if (picked != null) {
       endDate.value = picked;
       endDateController.text = "${picked.toLocal()}".split(' ')[0];
-    } else {
-    }
+    } else {}
   }
 
   //Register New Banner
   Future<void> createBanner() async {
-    try {
-      // Start Loading
-      RSFullScreenLoader.popUpCircular();
+    await ActionGuard.run(
+        permission: Permission.bannerCreate,
+        showDeniedScreen: true,
+        action: () async {
+          try {
+            print('🟡 [CREATE_BANNER] Started');
 
-      // Check internet connectivity
-      final isConnected = await NetworkManager.instance.isConnected();
-      if (!isConnected) {
-        RSFullScreenLoader.stopLoading();
-        return;
-      }
+            // Start Loading
+            RSFullScreenLoader.popUpCircular();
 
-      // Form Validation
-      if (!formKey.currentState!.validate()) {
-        RSFullScreenLoader.stopLoading();
-        return;
-      }
+            // Check internet connectivity
+            final isConnected = await NetworkManager.instance.isConnected();
 
-      if (startDate.value == null || endDate.value == null) {
-        RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(title: 'Validation Error', message: 'Please fill all required fields.');
-        return;
-      }
+            if (!isConnected) {
+              RSFullScreenLoader.stopLoading();
+              return;
+            }
 
-      if (startDate.value!.isAfter(endDate.value!)) {
-        RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(title: 'Date Error', message: 'Start date cannot be after expiry date.');
-        return;
-      }
+            // Form Validation
+            final isValid = formKey.currentState!.validate();
 
-      //Map data
-      final newRecord = BannerModel(
-        id: '',
-        targetScreen: targetScreen.value,
-        active: isActive.value,
-        imageUrl: imageURL.value,
-        type: bannerType.value,
-        value: bannerValue.value,
-        startDate: DateTime.parse(startDateController.text),
-        endDate: DateTime.parse(endDateController.text),
-      );
+            if (!isValid) {
+              RSFullScreenLoader.stopLoading();
+              return;
+            }
 
-      // Create the brand in Firestore and get the generated ID
-      newRecord.id = await bannerRepo.createBanner(newRecord);
+            if (startDate.value == null || endDate.value == null) {
+              RSFullScreenLoader.stopLoading();
+              RSLoaders.error(
+                message: 'Please fill all required fields.',
+              );
+              return;
+            }
 
-      //Update all data list
-      bannerController.addItemToLists(newRecord);
+            if (startDate.value!.isAfter(endDate.value!)) {
+              RSFullScreenLoader.stopLoading();
+              RSLoaders.error(
+                message: 'Start date cannot be after expiry date.',
+              );
+              return;
+            }
 
-      //Remove loading
-      RSFullScreenLoader.stopLoading();
+            final newRecord = BannerModel(
+              id: '',
+              targetScreen: targetScreen.value,
+              active: isActive.value,
+              imageUrl: imageURL.value,
+              type: bannerType.value,
+              value: bannerValue.value,
+              startDate: DateTime.parse(startDateController.text),
+              endDate: DateTime.parse(endDateController.text),
+            );
 
-      //Success message
-      RSLoaders.successSnackBar(
-          title: 'Congratulations', message: 'New Banner has been Added');
-    } catch (e) {
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Oh Snap', message: e.toString());
-    }
+            // Create in Firestore
+            newRecord.id = await bannerRepo.createBanner(newRecord);
+            print(
+                '🟢 [CREATE_BANNER] Firestore created with ID = ${newRecord.id}');
+
+            // Update local lists
+            bannerController.addItemToLists(newRecord);
+
+            // Stop loading
+            RSFullScreenLoader.stopLoading();
+
+            // Success
+            RSLoaders.success(message: 'New Banner has been Added');
+
+            Get.offNamed(RSRoutes.banners);
+          } catch (e, stack) {
+            RSFullScreenLoader.stopLoading();
+            print('❌ [CREATE_BANNER] Exception: $e');
+            print('❌ [CREATE_BANNER] StackTrace:\n$stack');
+
+            RSLoaders.error(
+              message: e.toString(),
+            );
+          }
+        });
   }
-
 }

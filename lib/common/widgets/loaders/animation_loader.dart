@@ -35,37 +35,54 @@ class RSAnimationLoaderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Lottie.asset(animation, height: height ?? MediaQuery.of(context).size.height * 0.5,width: width), // Display Lottie Animation
-          const SizedBox(height: RSSizes.defaultSpace),
-          Text(
-            text,
-            style: style ?? Theme.of(context).textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: RSSizes.defaultSpace),
-          showAction
-              ? SizedBox(
-                  width: 250,
-                  child: OutlinedButton(
-                    onPressed: onActionPressed,
-                    style: OutlinedButton.styleFrom(
-                        backgroundColor: RSColors.dark),
-                    child: Text(
-                      actionText!,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium!
-                          .apply(color: RSColors.light),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxHeight = constraints.maxHeight;
+
+        return Center(
+          child: SingleChildScrollView( // 🔑 prevents overflow
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Lottie.asset(
+                  animation,
+                  height: height ?? maxHeight * 0.5, // 🔑 bounded
+                  width: width,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: RSSizes.defaultSpace),
+                Text(
+                  text,
+                  style: style ?? Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                if (showAction) ...[
+                  const SizedBox(height: RSSizes.defaultSpace),
+                  SizedBox(
+                    width: 250,
+                    child: OutlinedButton(
+                      onPressed: onActionPressed,
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: RSColors.dark,
+                      ),
+                      child: Text(
+                        actionText!,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium!
+                            .apply(color: RSColors.light),
+                      ),
                     ),
                   ),
-                )
-              : const SizedBox(),
-        ],
-      ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
+
 }

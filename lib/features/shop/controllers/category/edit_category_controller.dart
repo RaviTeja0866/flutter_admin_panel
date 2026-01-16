@@ -4,6 +4,9 @@ import 'package:roguestore_admin_panel/data/repositories/category/category_repos
 import 'package:roguestore_admin_panel/features/shop/controllers/category/category_controller.dart';
 import 'package:roguestore_admin_panel/features/shop/models/category_model.dart';
 
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../routes/routes.dart';
+import '../../../../utils/constants/enums.dart';
 import '../../../../utils/helpers/network_manager.dart';
 import '../../../../utils/popups/full_screen_loader.dart';
 import '../../../../utils/popups/loaders.dart';
@@ -13,93 +16,111 @@ import '../../../media/models/image_model.dart';
 class EditCategoryController extends GetxController {
   static EditCategoryController get instance => Get.find();
 
+  final _categoryRepository = CategoryRepository.instance;
+
+  /// 🔑 SOURCE OF TRUTH
+  final Rxn<CategoryModel> category = Rxn<CategoryModel>();
+
   final selectedParent = CategoryModel.empty().obs;
-  final loading = false.obs;
   final isFeatured = false.obs;
-  RxString imageURL = ''.obs;
+  final imageURL = ''.obs;
 
   final name = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
-  // -------------------------
-  // Init Data
-  // -------------------------
-  void init(CategoryModel category) {
-    name.text = category.name;
-    isFeatured.value = category.isFeatured;
-    imageURL.value = category.image;
+  bool _loaded = false;
 
-    if (category.parentId.isNotEmpty) {
-      selectedParent.value = CategoryController.instance.allItems
-          .firstWhere((c) => c.id == category.parentId);
+  // ---------------------------------------------------------------------------
+  // LOAD CATEGORY BY ID (WEB SAFE)
+  // ---------------------------------------------------------------------------
+  Future<void> loadCategory(String categoryId) async {
+    if (_loaded) return;
+    _loaded = true;
+
+    final data = await _categoryRepository.getById(categoryId);
+    category.value = data;
+
+    // Init fields
+    name.text = data.name;
+    isFeatured.value = data.isFeatured;
+    imageURL.value = data.image;
+
+    if (data.parentId.isNotEmpty) {
+      final parent = CategoryController.instance.allItems
+          .firstWhereOrNull((c) => c.id == data.parentId);
+
+      if (parent != null) {
+        selectedParent.value = parent;
+      }
     }
   }
 
-  // -------------------------
-  // Update Category
-  // -------------------------
-  Future<void> updateCategory(CategoryModel category) async {
-    try {
-      RSFullScreenLoader.popUpCircular();
+  // ---------------------------------------------------------------------------
+  // UPDATE CATEGORY
+  // ---------------------------------------------------------------------------
+  Future<void> updateCategory() async {
+    await ActionGuard.run(
+        permission: Permission.categoryUpdate,
+        showDeniedScreen: true,
+        action: () async {
+      try {
+        RSFullScreenLoader.popUpCircular();
 
-      final isConnected = await NetworkManager.instance.isConnected();
-      if (!isConnected) {
+        final isConnected = await NetworkManager.instance.isConnected();
+        if (!isConnected) {
+          RSFullScreenLoader.stopLoading();
+          return;
+        }
+
+        if (!formKey.currentState!.validate()) {
+          RSFullScreenLoader.stopLoading();
+          return;
+        }
+
+        final item = category.value!;
+        item
+          ..name = name.text.trim()
+          ..image = imageURL.value
+          ..parentId = selectedParent.value.id
+          ..isFeatured = isFeatured.value
+          ..updatedAt = DateTime.now();
+
+        await _categoryRepository.updateCategory(item);
+
+        CategoryController.instance.updateItemFromLists(item);
+
         RSFullScreenLoader.stopLoading();
-        return;
-      }
-
-      if (!formKey.currentState!.validate()) {
+        RSLoaders.success(message: 'Category Updated Successfully');
+        resetFields();
+        Get.offNamed(RSRoutes.categories);
+      } catch (e) {
         RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(
-            title: 'Oh Snap', message: 'Form validation failed.');
-        return;
+        RSLoaders.error(
+          message: e.toString(),
+        );
       }
-
-      // Update ONLY allowed fields
-      category.name = name.text.trim();
-      category.image = imageURL.value;
-      category.parentId = selectedParent.value.id;
-      category.isFeatured = isFeatured.value;
-      category.updatedAt = DateTime.now();
-
-      await CategoryRepository.instance.updateCategory(category);
-
-      CategoryController.instance.updateItemFromLists(category);
-
-      resetFields();
-
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.successSnackBar(
-        title: 'Success',
-        message: 'Category updated successfully.',
-      );
-    } catch (e) {
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Oh Snap', message: e.toString());
-    }
+    });
   }
 
-  // -------------------------
-  // Pick Image
-  // -------------------------
+  // ---------------------------------------------------------------------------
+  // PICK IMAGE
+  // ---------------------------------------------------------------------------
   void pickImage() async {
     final controller = Get.put(MediaController());
-    List<ImageModel>? selectedImages =
-    await controller.selectImagesFromMedia();
+    final images = await controller.selectImagesFromMedia();
 
-    if (selectedImages != null && selectedImages.isNotEmpty) {
-      imageURL.value = selectedImages.first.url;
+    if (images != null && images.isNotEmpty) {
+      imageURL.value = images.first.url;
     }
   }
 
-  // -------------------------
-  // Reset
-  // -------------------------
   void resetFields() {
-    selectedParent(CategoryModel.empty());
-    loading(false);
-    isFeatured(false);
     name.clear();
     imageURL.value = '';
+    isFeatured.value = false;
+    selectedParent.value = CategoryModel.empty();
+    category.value = null;
+    _loaded = false;
   }
+
 }

@@ -6,11 +6,10 @@ class AdminUserModel {
   // ------------------------
   // Identity
   // ------------------------
-  final String uid; // Firebase Auth UID
+  final String id; // Firebase Auth UID
   final String email;
 
-  String firstName;
-  String lastName;
+  String fullName;
   String phoneNumber;
 
   // ------------------------
@@ -32,10 +31,9 @@ class AdminUserModel {
   // Constructor
   // ------------------------
   AdminUserModel({
-    required this.uid,
+    required this.id,
     required this.email,
-    this.firstName = '',
-    this.lastName = '',
+    this.fullName = '',
     this.phoneNumber = '',
     required this.roleId,
     required this.isActive,
@@ -48,7 +46,6 @@ class AdminUserModel {
   // ------------------------
   // Helpers
   // ------------------------
-  String get fullName => '$firstName $lastName'.trim();
 
   String get formattedCreatedAt =>
       RSFormatter.formatDate(createdAt);
@@ -64,10 +61,9 @@ class AdminUserModel {
       ) {
     final data = doc.data()!;
     return AdminUserModel(
-      uid: doc.id,
+      id: doc.id,
       email: data['email'],
-      firstName: data['firstName'] ?? '',
-      lastName: data['lastName'] ?? '',
+      fullName: data['fullName'] ?? '',
       phoneNumber: data['phoneNumber'] ?? '',
       roleId: data['roleId'],
       isActive: data['isActive'] ?? false,
@@ -81,8 +77,7 @@ class AdminUserModel {
   Map<String, dynamic> toJson() {
     return {
       'email': email,
-      'firstName': firstName,
-      'lastName': lastName,
+      'fullName': fullName,
       'phoneNumber': phoneNumber,
       'roleId': roleId,
       'isActive': isActive,
@@ -95,10 +90,29 @@ class AdminUserModel {
     };
   }
 
-  static List<Permission> _parsePermissions(List<dynamic>? list) {
-    if (list == null) return [];
-    return list
-        .map((e) => Permission.values.byName(e))
-        .toList();
+  static List<Permission> _parsePermissions(dynamic raw) {
+    if (raw == null) return [];
+
+    if (raw is List) {
+      return raw
+          .whereType<String>()
+          .where((e) => e.isNotEmpty)
+          .where((e) =>
+          Permission.values.any((p) => p.name == e))
+          .map((e) => Permission.values.byName(e))
+          .toList();
+    }
+
+    if (raw is Map) {
+      return raw.entries
+          .where((e) =>
+      e.key.isNotEmpty &&
+          e.value == true &&
+          Permission.values.any((p) => p.name == e.key))
+          .map((e) => Permission.values.byName(e.key))
+          .toList();
+    }
+
+    return [];
   }
 }

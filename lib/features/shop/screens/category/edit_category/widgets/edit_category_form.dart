@@ -21,7 +21,6 @@ class EditCategoryForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final editController = Get.put(EditCategoryController());
-    editController.init(category);
     final categoryController = Get.put(CategoryController());
     return RSRoundedContainer(
       width: 500,
@@ -83,7 +82,7 @@ class EditCategoryForm extends StatelessWidget {
 
               SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(onPressed: () => editController.updateCategory(category), child: Text('Edit')),
+                  child: ElevatedButton(onPressed: () => editController.updateCategory(), child: Text('Edit')),
                 ),
 
               SizedBox(height: RSSizes.spaceBtwInputFields * 2),

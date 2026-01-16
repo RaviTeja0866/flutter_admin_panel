@@ -8,6 +8,8 @@ import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/constants/sizes.dart';
 import 'package:roguestore_admin_panel/utils/popups/loader_animation.dart';
 
+import '../../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../table/data_table.dart';
 
 class SizeGuideTabletScreen extends StatelessWidget {
@@ -34,7 +36,19 @@ class SizeGuideTabletScreen extends StatelessWidget {
                 return RSRoundedContainer(
                   child: Column(
                     children: [
-                      RSTableHeader(buttonText: 'Create New Size Guide', onPressed: () => Get.toNamed(RSRoutes.createSizeGuide)),
+                      RSTableHeader(
+                        searchOnChanged: (query) => controller.searchQuery(query),
+
+                        primaryButton: AdminScreenGuard(
+                          permission: Permission.sizeGuideCreate,
+                          behavior: GuardBehavior.disable,
+                          child: ElevatedButton(
+                            onPressed: () => Get.toNamed(RSRoutes.createSizeGuide),
+                            child: const Text('Create New SizeGuide'),
+                          ),
+                        ),
+
+                      ),
                       SizedBox(height: RSSizes.spaceBtwItems),
 
                       // Table

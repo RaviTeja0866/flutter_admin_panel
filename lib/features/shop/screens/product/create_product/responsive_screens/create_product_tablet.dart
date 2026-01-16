@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 
 import '../../../../../../common/widgets/containers/rounded_container.dart';
+import '../../../../../../routes/routes.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import '../../../../controllers/product/product_images_controller.dart';
 import '../widgets/additional_images.dart';
@@ -24,7 +25,7 @@ class CreateProductTabletScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(ProductImagesController());
 
-    return  Scaffold(
+    return Scaffold(
       bottomNavigationBar: ProductBottomNavigationButtons(),
       body: SingleChildScrollView(
         child: Padding(
@@ -33,7 +34,15 @@ class CreateProductTabletScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BreadCrumbs
-              RSBreadcrumbsWithHeading(returnToPreviousScreen: true, heading: 'Create product', breadcrumbItems: ['Create product']),
+              RSBreadcrumbsWithHeading(
+                  returnToPreviousScreen: true,
+                  heading: 'Create product',
+                  breadcrumbItems: ['Create product'],
+                onBack: () {
+                  Get.offNamed(RSRoutes.products);
+                },
+
+              ),
               SizedBox(height: RSSizes.spaceBtwSections),
 
               // Create Product
@@ -50,7 +59,8 @@ class CreateProductTabletScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         //Heading
-                        Text('Stock&Pricing', style: Theme.of(context).textTheme.headlineSmall),
+                        Text('Stock&Pricing',
+                            style: Theme.of(context).textTheme.headlineSmall),
                         SizedBox(height: RSSizes.spaceBtwItems),
 
                         //ProductType
@@ -81,12 +91,16 @@ class CreateProductTabletScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('All Product Images',style: Theme.of(context).textTheme.headlineSmall),
+                        Text('All Product Images',
+                            style: Theme.of(context).textTheme.headlineSmall),
                         SizedBox(height: RSSizes.spaceBtwItems),
                         ProductAdditionalImages(
-                          additionalProductImagesURLs: controller.additionalProductImageUrls,
-                          onTapToAddImages: () => controller.selectMultipleProductImages(),
-                          onTapToRemoveImage:(index) => controller.removeImage(index),
+                          additionalProductImagesURLs:
+                              controller.additionalProductImageUrls,
+                          onTapToAddImages: () =>
+                              controller.selectMultipleProductImages(),
+                          onTapToRemoveImage: (index) =>
+                              controller.removeImage(index),
                         )
                       ],
                     ),

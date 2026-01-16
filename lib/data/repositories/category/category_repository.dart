@@ -27,6 +27,25 @@ final FirebaseFirestore _db = FirebaseFirestore.instance;
     }
   }
 
+  /// Get category by ID (REQUIRED for edit + reload)
+  Future<CategoryModel> getById(String id) async {
+    try {
+      final doc = await _db.collection('Categories').doc(id).get();
+
+      if (!doc.exists) {
+        throw 'Category not found';
+      }
+      return CategoryModel.fromSnapshot(doc);
+    } on FirebaseException catch (e) {
+      throw RSFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw RSPlatformException(e.code).message;
+    } catch (e) {
+      throw 'Something went wrong. Please try again';
+    }
+  }
+
+
   // Create a new Category document in the 'Categories' collection
   Future<String> createCategory(CategoryModel category) async {
     try {

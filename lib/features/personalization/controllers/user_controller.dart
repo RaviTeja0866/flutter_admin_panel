@@ -7,7 +7,8 @@ import 'package:roguestore_admin_panel/utils/popups/full_screen_loader.dart';
 
 import '../../../data/repositories/user/user_repository.dart';
 import '../../../utils/popups/loaders.dart';
-import '../models/user_model.dart';
+import '../../shop/models/user_model.dart';
+import '../models/admin_model.dart';
 
 class UserProfileController extends GetxController {
   static UserProfileController get instance => Get.find();
@@ -22,29 +23,13 @@ class UserProfileController extends GetxController {
   final phoneController = TextEditingController();
 
   // Dependencies
-  final userRepository = Get.put(UserRepository());
+  final userRepository = UserRepository.instance;
 
   @override
   void onInit() {
-    fetchUserDetails();
     super.onInit();
   }
 
-
-  // Function setting details fro the repository
-  Future<UserModel> fetchUserDetails() async{
-    try{
-      loading.value = true;
-      final user = await userRepository.fetchAdminDetails();
-      this.user.value = user;
-      loading.value = false;
-
-      return user;
-    } catch(e){
-      RSLoaders.errorSnackBar(title: 'Something went wrong.', message: e.toString());
-      return UserModel.empty();
-    }
-  }
 
   //pick Thumbnail image from media
   void updateProfilePicture() async{
@@ -61,12 +46,12 @@ class UserProfileController extends GetxController {
         user.value.profilePicture = selectedImage.url;
         user.refresh();
 
-        RSLoaders.successSnackBar(title: 'Congratulations', message: 'Your Profile Picture Has Been updated.');
+        RSLoaders.success(message: 'Your Profile Picture Has Been updated.');
       }
       loading.value = false;
     } catch(e){
       loading.value = false;
-      RSLoaders.errorSnackBar(title: 'OH Snap!', message: e.toString());
+      RSLoaders.error(message: e.toString());
     }
   }
 
@@ -95,10 +80,10 @@ class UserProfileController extends GetxController {
       user.refresh();
 
       loading.value = false;
-      RSLoaders.successSnackBar(title: 'Congratulations', message: 'Your Profile Has Been updated.');
+      RSLoaders.success(message: 'Your Profile Has Been updated.');
     } catch(e){
       loading.value = false;
-      RSLoaders.errorSnackBar(title: 'OH Snap!', message: e.toString());
+      RSLoaders.error(message: e.toString());
     }
   }
 }

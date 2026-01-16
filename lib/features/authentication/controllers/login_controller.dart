@@ -1,172 +1,112 @@
-  import 'dart:convert';
+import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-  import 'package:get/get.dart';
-  import 'package:get_storage/get_storage.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
-  import 'package:roguestore_admin_panel/data/repositories/authentication/authentication_repository.dart';
-  import 'package:roguestore_admin_panel/data/repositories/settings/settings_repository.dart';
-  import 'package:roguestore_admin_panel/data/repositories/user/user_repository.dart';
-  import 'package:roguestore_admin_panel/features/personalization/controllers/user_controller.dart';
-  import 'package:roguestore_admin_panel/features/personalization/models/settings_model.dart';
-  import 'package:roguestore_admin_panel/features/personalization/models/user_model.dart';
-  import 'package:roguestore_admin_panel/utils/constants/enums.dart';
-  import 'package:roguestore_admin_panel/utils/constants/image_strings.dart';
-  import 'package:roguestore_admin_panel/utils/constants/text_strings.dart';
-  import 'package:roguestore_admin_panel/utils/helpers/network_manager.dart';
-  import 'package:roguestore_admin_panel/utils/popups/full_screen_loader.dart';
-  import 'package:roguestore_admin_panel/utils/popups/loaders.dart';
 
-  // Controller for handling login functionality
-  class LoginController extends GetxController {
-    static LoginController get instance => Get.find();
+import '../../../utils/helpers/network_manager.dart';
+import '../../../utils/popups/full_screen_loader.dart';
+import '../../../utils/popups/loaders.dart';
+import '../../../utils/constants/image_strings.dart';
+import '../../../routes/routes.dart';
+import '../../authentication/controllers/admin_auth_controller.dart';
 
-    final hidePassword = true.obs;
-    final rememberMe = false.obs;
-    final localStorage = GetStorage();
+/// ============================================================
+/// ⚠️ DEV ONLY FLAG
+/// SET TO false BEFORE PRODUCTION
+/// ============================================================
+const bool DEV_AUTO_ADMIN = true;
 
-    final email = TextEditingController();
-    final password = TextEditingController();
-    final loginFormKey = GlobalKey<FormState>();
+/// Replace with your actual Lambda URL
+const String MAKE_ADMIN_LAMBDA_URL =
+    'https://bmfnlmu22h.execute-api.ap-south-1.amazonaws.com/prod/adminRole'; // <-- UPDATE THIS
 
-    @override
-    void onInit() {
-      email.text = localStorage.read('REMEMBER_ME_EMAIL') ?? '';
-      password.text = localStorage.read('REMEMBER_ME_PASSWORD') ?? '';
-      super.onInit();
+class LoginController extends GetxController {
+  static LoginController get instance => Get.find();
+
+  final hidePassword = true.obs;
+  final rememberMe = false.obs;
+  final localStorage = GetStorage();
+
+  final email = TextEditingController();
+  final password = TextEditingController();
+  final loginFormKey = GlobalKey<FormState>();
+
+  @override
+  void onInit() {
+    super.onInit();
+    email.text = localStorage.read('ADMIN_EMAIL') ?? '';
+    debugPrint('🟢 [LOGIN] Controller initialized');
+  }
+
+  // ------------------------------------------------
+  // LOGIN
+  // ------------------------------------------------
+  Future<void> login() async {
+    final isConnected = await NetworkManager.instance.isConnected();
+    if (!isConnected) {
+      throw Exception('Please check your internet connection.');
     }
 
-    // Handles email and password sign-in process
-    Future<void> emailAndPasswordSignIn() async {
-      try {
-        // Start Loader
-        RSFullScreenLoader.openLoadingDialog(
-          'Logging in Admin Account',
-          RSImages.docerAnimation,
-        );
-
-        // Check Internet
-        final isConnected = await NetworkManager.instance.isConnected();
-        if (!isConnected) {
-          RSFullScreenLoader.stopLoading();
-          RSLoaders.errorSnackBar(
-            title: 'No Internet',
-            message: 'Please check your internet connection.',
-          );
-          return;
-        }
-
-        // Form Validation
-        if (!loginFormKey.currentState!.validate()) {
-          RSFullScreenLoader.stopLoading();
-          return;
-        }
-
-        // Remember Me
-        if (rememberMe.value) {
-          localStorage.write('REMEMBER_ME_EMAIL', email.text.trim());
-          localStorage.write('REMEMBER_ME_PASSWORD', password.text.trim());
-        }
-
-        // LOGIN WITH EMAIL + PASSWORD
-        await AuthenticationRepository.instance.loginWithEmailAndPassword(
-          email.text.trim(),
-          password.text.trim(),
-        );
-
-        // -------------------------------
-        // TEMPORARY OPTION-B: AUTO ADMIN
-        // -------------------------------
-        final uid = FirebaseAuth.instance.currentUser!.uid;
-
-        final response = await http.post(
-          Uri.parse("https://bmfnlmu22h.execute-api.ap-south-1.amazonaws.com/prod/adminRole"),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode({"uid": uid}),
-        );
-
-        print("[MAKE ADMIN RESPONSE] ${response.body}");
-
-        // Force refresh ID token so role claim loads
-        await FirebaseAuth.instance.currentUser!.getIdToken(true);
-
-        // Fetch user profile
-        final user = await UserProfileController.instance.fetchUserDetails();
-
-        // Stop loader
-        RSFullScreenLoader.stopLoading();
-
-        // -------------------------------
-        // VERIFY ROLE USING CUSTOM CLAIM
-        // -------------------------------
-        final idToken = await FirebaseAuth.instance.currentUser!.getIdTokenResult();
-        final role = idToken.claims?["role"];
-
-        print("[CUSTOM CLAIM ROLE] $role");
-
-        if (role != "admin") {
-          await AuthenticationRepository.instance.logout();
-          RSLoaders.errorSnackBar(
-            title: 'Not Authorized',
-            message: 'Admin privileges not granted.',
-          );
-          return;
-        }
-
-        // SUCCESS → Redirect to dashboard
-        AuthenticationRepository.instance.screenRedirect();
-      } catch (e) {
-        RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(
-          title: 'Oh Snap',
-          message: e.toString(),
-        );
-      }
+    if (!loginFormKey.currentState!.validate()) {
+      return;
     }
 
-    // Handles registration of admin user
-    Future<void> registerAdmin() async {
-      try {
+    if (rememberMe.value) {
+      localStorage.write('ADMIN_EMAIL', email.text.trim());
+    } else {
+      localStorage.remove('ADMIN_EMAIL');
+    }
 
-        // Start Loading
-        RSFullScreenLoader.openLoadingDialog('Registering Admin Account', RSImages.docerAnimation);
+    final adminController = AdminAuthController.instance;
+    await adminController.login(
+      email: email.text.trim(),
+      password: password.text.trim(),
+    );
 
-        // Check Internet Connectivity
-        final isConnected = await NetworkManager.instance.isConnected();
-        if (!isConnected) {
-          RSFullScreenLoader.stopLoading();
-          RSLoaders.errorSnackBar(title: 'No Internet', message: 'Please check your internet connection.');
-          return;
-        }
+    if (DEV_AUTO_ADMIN) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('User not found');
 
-        // Register user using email and password authentication
-        await AuthenticationRepository.instance.registerWithEmailAndPassword(RSTexts.adminEmail, RSTexts.adminPassword);
+      final idToken = await user.getIdToken(true);
+      if (idToken == null) throw Exception('Failed to retrieve ID token');
 
-        // Create Admin record in the Firestore
-        final userRepository = Get.put(UserRepository());
-        final adminUser = UserModel(
-          id: AuthenticationRepository.instance.authUser!.uid,
-          firstName: 'Roguestore',
-          lastName: 'Admin',
-          email: RSTexts.adminEmail,
-          role: AppRole.admin,
-          createdAt: DateTime.now(),
-        );
-
-        final settingsRepository = Get.put(SettingsRepository());
-        await settingsRepository.registerSettings(SettingsModel(appLogo: '', appName: 'Roguestore', taxRate: 0, shippingCost: 0));
-
-        await userRepository.createUser(adminUser);
-
-        // Remove Loader
-        RSFullScreenLoader.stopLoading();
-
-        // Redirect
-        AuthenticationRepository.instance.screenRedirect();
-      } catch (e) {
-        RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(title: 'Oh Snap', message: e.toString());
-      }
+      await _makeAdmin(uid: user.uid, idToken: idToken);
+      await user.getIdToken(true);
     }
   }
+
+  // ------------------------------------------------
+  // DEV HELPER: CALL MAKE-ADMIN LAMBDA
+  // ------------------------------------------------
+  Future<void> _makeAdmin({
+    required String uid,
+    required String idToken,
+  }) async {
+    final response = await http.post(
+      Uri.parse(MAKE_ADMIN_LAMBDA_URL),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $idToken',
+      },
+      body: jsonEncode({'uid': uid}),
+    );
+
+    if (response.statusCode != 200) {
+      debugPrint('❌ [DEV] Make admin failed: ${response.body}');
+      throw 'Failed to assign admin role';
+    }
+  }
+
+  // ------------------------------------------------
+  // ERROR HANDLER
+  // ------------------------------------------------
+  void _stopWithError(String message) {
+    RSFullScreenLoader.stopLoading();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      RSLoaders.error(message: message);
+    });
+  }
+}

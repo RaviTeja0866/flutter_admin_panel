@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
+import '../../../../../../routes/routes.dart';
+import '../../../../../../utils/constants/sizes.dart';
+import '../widgets/create_admin_user_form.dart';
 
 class CreateAdminUserDesktopScreen extends StatelessWidget {
   const CreateAdminUserDesktopScreen({super.key});
-
 
   @override
   Widget build(BuildContext context) {
@@ -16,16 +21,15 @@ class CreateAdminUserDesktopScreen extends StatelessWidget {
               // BreadCrumbs
               RSBreadcrumbsWithHeading(
                 returnToPreviousScreen: true,
-                heading: 'Create SizeGuide',
-                breadcrumbItems: [RSRoutes.sizeGuide, 'Create SizeGuide'],
+                heading: 'Create Admin User',
+                breadcrumbItems: [RSRoutes.adminUser, 'Create Admin User'],
                 onBack: () {
-                  Get.offNamed(RSRoutes.sizeGuide);
+                  Get.offNamed(RSRoutes.adminUser);
                 },
-
               ),
               SizedBox(height: RSSizes.spaceBtwSections),
 
-              CreateSizeGuideForm(),
+              CreateAdmminUserFormScreen(),
             ],
           ),
         ),

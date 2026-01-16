@@ -7,6 +7,8 @@ import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/constants/colors.dart';
 
 import '../../../../../../common/widgets/data_table/table_action_buttons.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../../../utils/constants/enums.dart';
 
 class CouponRows extends DataTableSource {
   final controller = CouponController.instance;
@@ -20,7 +22,11 @@ class CouponRows extends DataTableSource {
 
     return DataRow2(
       selected: controller.selectedRows[index],
-      onSelectChanged: (value) => controller.selectedRows[index] = value ?? false,
+      onTap: () => Get.toNamed(
+        '${RSRoutes.editCoupon}/${coupon.id}',
+      ),
+      onSelectChanged: (value) =>
+          controller.selectedRows[index] = value ?? false,
       cells: [
         DataCell(Text(coupon.title)), // Coupon title
         DataCell(Text(coupon.discountType == 'percentage'
@@ -34,9 +40,18 @@ class CouponRows extends DataTableSource {
         DataCell(Text(coupon.formattedEndDate)), // Formatted end date
         DataCell(
           RSTableActionButtons(
-            onEditPressed: () => Get.toNamed(RSRoutes.editCoupon, arguments: coupon),
-            onDeletePressed: () => controller.confirmAndDeleteItem(coupon),
-          ),
+            onEditPressed: () => Get.toNamed(
+              '${RSRoutes.editCoupon}/${coupon.id}',
+            ),
+            onDeletePressed: () {
+              ActionGuard.run(
+                permission: Permission.couponDelete, // use correct enum
+                showDeniedScreen: true,
+                action: () async {
+                  controller.confirmAndDeleteItem(coupon);
+                },
+              );
+            },          ),
         ),
       ],
     );
@@ -49,5 +64,6 @@ class CouponRows extends DataTableSource {
   int get rowCount => controller.filteredItems.length;
 
   @override
-  int get selectedRowCount => controller.selectedRows.where((selected) => selected).length;
+  int get selectedRowCount =>
+      controller.selectedRows.where((selected) => selected).length;
 }

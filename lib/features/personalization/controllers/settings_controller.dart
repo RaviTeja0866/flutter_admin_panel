@@ -47,7 +47,7 @@ class SettingsController extends GetxController {
       loading.value = false;
       return settings;
     } catch(e){
-      RSLoaders.errorSnackBar(title: 'Something went wrong.', message: e.toString());
+      RSLoaders.error(message: e.toString());
       return SettingsModel();
     }
   }
@@ -67,12 +67,12 @@ class SettingsController extends GetxController {
         settings.value.appLogo = selectedImage.url;
         settings.refresh();
         
-        RSLoaders.successSnackBar(title: 'Congratulations', message: 'App Logo Has Been updated.');
+        RSLoaders.success(message: 'App Logo Has Been updated.');
       }
       loading.value = false;
     } catch(e){
       loading.value = false;
-      RSLoaders.errorSnackBar(title: 'OH Snap!', message: e.toString());
+      RSLoaders.error(message: e.toString());
     }
   }
 
@@ -101,10 +101,10 @@ class SettingsController extends GetxController {
       settings.refresh();
 
       loading.value = false;
-      RSLoaders.successSnackBar(title: 'Congratulations', message: 'App Settings Has Been updated.');
+      RSLoaders.success(message: 'App Settings Has Been updated.');
     } catch(e){
       loading.value = false;
-      RSLoaders.errorSnackBar(title: 'OH Snap!', message: e.toString());
+      RSLoaders.error(message: e.toString());
     }
   }
 }

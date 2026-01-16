@@ -1,29 +1,55 @@
-
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
-import 'package:roguestore_admin_panel/features/shop/models/shop_category.dart';
 import 'package:roguestore_admin_panel/features/shop/screens/shop_category/edit_shop_category/widgets/edit_shop_category_form.dart';
 import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/constants/sizes.dart';
 
-class EditShopCategoryDesktopScreen extends StatelessWidget {
-  const EditShopCategoryDesktopScreen({super.key, required this.shopCategory});
+import '../../../../controllers/shop_category/edit_shop_category_controller.dart';
 
-  final ShopCategory shopCategory;
+class EditShopCategoryDesktopScreen extends StatelessWidget {
+  const EditShopCategoryDesktopScreen({
+    super.key,
+    required this.shopCategoryId,
+  });
+
+  final String shopCategoryId;
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(EditShopCategoryController());
+
+    // 🔑 Load data once
+    controller.loadCategory(shopCategoryId);
+
     return Scaffold(
       body: SingleChildScrollView(
-        child: Padding(padding: EdgeInsets.all(RSSizes.defaultSpace),
+        child: Padding(
+          padding: EdgeInsets.all(RSSizes.defaultSpace),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // BreadCrumbs
-              RSBreadcrumbsWithHeading(returnToPreviousScreen: true,heading: 'Update ShopCategory', breadcrumbItems: [RSRoutes.shopCategory, 'Update ShopCategory']),
+              RSBreadcrumbsWithHeading(
+                heading: 'Update ShopCategory',
+                breadcrumbItems: [
+                  RSRoutes.shopCategory,
+                  'Update ShopCategory',
+                ],
+                returnToPreviousScreen: true,
+                onBack: () {
+                  Get.offNamed(RSRoutes.shopCategory);
+                },
+              ),
               SizedBox(height: RSSizes.spaceBtwSections),
+              Obx(() {
+                if (controller.category.value == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              EditShopCategoryForm(shopCategory: shopCategory),
+                return EditShopCategoryForm(
+                  shopCategory: controller.category.value!,
+                );
+              }),
             ],
           ),
         ),

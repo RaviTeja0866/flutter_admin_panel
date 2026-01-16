@@ -9,7 +9,7 @@ class CategoryController extends RSBaseController<CategoryModel> {
   static CategoryController get instance => Get.find();
 
 
-  final _categoryRepository = Get.put(CategoryRepository());
+  final _categoryRepository = CategoryRepository.instance;
 
 
   @override

@@ -18,6 +18,8 @@ import 'package:roguestore_admin_panel/features/shop/models/product_model.dart';
 
 
 import 'package:roguestore_admin_panel/utils/constants/enums.dart';
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../routes/routes.dart';
 import '../../../../utils/constants/image_strings.dart';
 import '../../../../utils/constants/sizes.dart';
 import '../../../../utils/helpers/network_manager.dart';
@@ -49,7 +51,7 @@ class EditProductController extends GetxController {
   final specificationsController = Get.put(ProductSpecificationsController());
 
   final stockPriceFormKey = GlobalKey<FormState>();
-  final productRepository = Get.put(ProductRepository());
+  final productRepository = ProductRepository.instance;
   final titleDescriptionFormKey = GlobalKey<FormState>();
 
   // Text Editing Controllers for input fields
@@ -67,6 +69,7 @@ class EditProductController extends GetxController {
   final Rx<SizeGuideModel?> selectedSizeGuide = Rx<SizeGuideModel?>(null);
   final Rx<CouponModel?> selectedCoupon = Rx<CouponModel?>(null);
   Rx<BannerModel?> selectedBanner = Rx<BannerModel?>(null);
+  final Rxn<ProductModel> product = Rxn<ProductModel>();
 
   // Flags for tracking different tasks
   RxBool thumbnailUploader = true.obs;
@@ -74,14 +77,19 @@ class EditProductController extends GetxController {
   RxBool productDataUploader = true.obs;
   RxBool categoriesRelationshipUploader = false.obs;
 
-  void initProductData(ProductModel product){
-    try{
+  bool _loaded = false;
+
+
+  void initProductData(ProductModel product) {
+    try {
       isLoading.value = true; // Set loading state while initialing data
 
       // Basic Information
       title.text = product.title;
       description.text = product.description ?? '';
-      productType.value = product.productType == ProductType.single.toString() ? ProductType.single : ProductType.variable;
+      productType.value = product.productType == ProductType.single.toString()
+          ? ProductType.single
+          : ProductType.variable;
 
       // Initialize product specifications
       if (product.specifications != null) {
@@ -89,7 +97,7 @@ class EditProductController extends GetxController {
       } else {
         specificationsController.resetValues();
       }
-      
+
       // Load Target Audience
       targetAudience.value = product.targetAudience;
 
@@ -97,7 +105,7 @@ class EditProductController extends GetxController {
       isFeatured.value = product.isFeatured ?? false;
 
       // Stock & Pricing (assuming productType and productVisibility are handled elsewhere)
-      if(product.productType == ProductType.single.toString()){
+      if (product.productType == ProductType.single.toString()) {
         stock.text = product.stock.toString();
         price.text = product.price.toString();
         salePrice.text = product.salePrice.toString();
@@ -114,25 +122,42 @@ class EditProductController extends GetxController {
       brandTextField.text = product.brand?.name ?? '';
 
       //Product Thumbnail and images
-      if(product.images != null){
+      if (product.images != null) {
         // Set the first image as thumbnail
         imagesController.selectedThumbnailImageUrl.value = product.thumbnail;
 
         // Add the images to additional product urls
-        imagesController.additionalProductImageUrls.assignAll(product.images ?? []);
+        imagesController.additionalProductImageUrls.assignAll(
+            product.images ?? []);
       }
 
       // product attributes & variations (assuming  method to fetch variations in ProductVariationsController)
-       attributesController.productAttributes.assignAll(product.productAttributes ?? []);
-       variationsController.productVariations.assignAll(product.productVariations ?? []);
-       variationsController.initializeVariationsControllers(product.productVariations ?? []);
+      attributesController.productAttributes.assignAll(
+          product.productAttributes ?? []);
+      variationsController.productVariations.assignAll(
+          product.productVariations ?? []);
+      variationsController.initializeVariationsControllers(
+          product.productVariations ?? []);
 
       isLoading.value = false; // Set loading state to back after initialization
 
       update();
-    } catch(e){
-      if(kDebugMode) print(e);
+    } catch (e) {
+      if (kDebugMode) print(e);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // LOAD PRODUCT BY ID
+  // ---------------------------------------------------------------------------
+  Future<void> loadProduct(String productId) async {
+    if (_loaded) return;
+    _loaded = true;
+
+    final data = await productRepository.getProductById(productId);
+    product.value = data;
+
+    initProductData(data);
   }
 
   // Method to load product specifications
@@ -151,23 +176,25 @@ class EditProductController extends GetxController {
     selectedCategoriesLoader.value = true;
 
     // Get product categories
-    final productCategories = await productRepository.getProductCategories(productId);
+    final productCategories = await productRepository.getProductCategories(
+        productId);
 
     final categoriesController = Get.put(CategoryController());
 
     // Check if the categories are already loaded
     if (categoriesController.allItems.isEmpty) {
       await categoriesController.fetchItems();
-    } else {
-    }
+    } else {}
 
     // Try to find the category matching one of the product categories
     try {
       final category = categoriesController.allItems.firstWhere(
-            (category) => productCategories.map((e) => e.categoryId).contains(category.name),
+            (category) =>
+            productCategories.map((e) => e.categoryId).contains(category.name),
         orElse: () {
           // Handle the case where no category is found
-          throw Exception("No matching category found for product with ID: $productId");
+          throw Exception(
+              "No matching category found for product with ID: $productId");
         },
       );
 
@@ -203,7 +230,8 @@ class EditProductController extends GetxController {
               (coupon) => coupon.id == productCoupon.id,
           orElse: () {
             // Handle the case where no coupon is found
-            throw Exception("No matching coupon found for product with ID: $productId");
+            throw Exception(
+                "No matching coupon found for product with ID: $productId");
           },
         );
 
@@ -243,7 +271,9 @@ class EditProductController extends GetxController {
           final banner = bannerController.allItems.firstWhere(
                 (banner) => banner.id == productBanner.id,
             orElse: () {
-              print("No matching banner found in controller for ID: ${productBanner.id}");
+              print(
+                  "No matching banner found in controller for ID: ${productBanner
+                      .id}");
               // Must return a BannerModel, not null
               throw Exception("Banner not found in controller");
             },
@@ -272,10 +302,10 @@ class EditProductController extends GetxController {
   }
 
   void updateCategory(ProductModel product, String selectedCategoryId) async {
-
     try {
       final oldCategoryId = product.categoryId ?? ''; // Ensure it's not null
-      final newCategoryId = selectedCategoryId.trim(); // Get the selected category ID
+      final newCategoryId = selectedCategoryId
+          .trim(); // Get the selected category ID
 
       // First check if there's actually a change in category
       if (oldCategoryId == newCategoryId) {
@@ -283,12 +313,15 @@ class EditProductController extends GetxController {
       }
 
       // Get existing product categories to verify current relationships
-      final existingCategories = await productRepository.getProductCategories(product.id);
-      final hasExistingCategory = existingCategories.any((cat) => cat.categoryId == oldCategoryId);
+      final existingCategories = await productRepository.getProductCategories(
+          product.id);
+      final hasExistingCategory = existingCategories.any((cat) =>
+      cat.categoryId == oldCategoryId);
 
       // Only delete if the old category relationship actually exists
       if (hasExistingCategory && oldCategoryId.isNotEmpty) {
-        await ProductRepository.instance.deleteProductCategory(product.id, oldCategoryId);
+        await productRepository.deleteProductCategory(
+            product.id, oldCategoryId);
       }
 
       // Create new category relationship if it doesn't exist
@@ -297,321 +330,360 @@ class EditProductController extends GetxController {
             productId: product.id,
             categoryId: newCategoryId
         );
-        await ProductRepository.instance.createProductCategory(productCategory);
+        await productRepository.createProductCategory(productCategory);
       }
 
       // Update the product's category ID
       product.categoryId = newCategoryId;
     } catch (e) {
-      RSLoaders.errorSnackBar(title: 'Error', message: e.toString());
+      RSLoaders.error(message: e.toString());
       rethrow;
     }
   }
 
   // Function to Update a  Product
   Future<void> updateProduct(ProductModel product) async {
-    try {
-      // Show progress dialog
-      showProgressDialog();
+      await ActionGuard.run(
+          permission: Permission.productUpdate,
+          showDeniedScreen: true,
+          action: () async {
+            try {
+              // Show progress dialog
+              showProgressDialog();
 
-      // Check internet connectivity
-      final isConnected = await NetworkManager.instance.isConnected();
-      if (!isConnected) {
-        RSFullScreenLoader.stopLoading();
-        return;
-      }
+              // Check internet connectivity
+              final isConnected = await NetworkManager.instance.isConnected();
+              if (!isConnected) {
+                RSFullScreenLoader.stopLoading();
+                return;
+              }
 
-      // Form Validation
-      if (!titleDescriptionFormKey.currentState!.validate()) {
-        RSFullScreenLoader.stopLoading();
-        return;
-      }
+              // Form Validation
+              if (!titleDescriptionFormKey.currentState!.validate()) {
+                RSFullScreenLoader.stopLoading();
+                return;
+              }
 
-      // Validate stock and pricing form if product type = single
-      if (productType.value == ProductType.single && !stockPriceFormKey.currentState!.validate()) {
-        RSFullScreenLoader.stopLoading();
-        return;
-      }
+              // Validate stock and pricing form if product type = single
+              if (productType.value == ProductType.single &&
+                  !stockPriceFormKey.currentState!.validate()) {
+                RSFullScreenLoader.stopLoading();
+                return;
+              }
 
-      // Ensure a brand is selected
-      if (selectedBrand.value == null) {
-        throw 'Select a Brand for this Product';
-      }
+              // Ensure a brand is selected
+              if (selectedBrand.value == null) {
+                throw 'Select a Brand for this Product';
+              }
 
-      // Ensure a category is selected
-      if (selectedCategory.value == null) {
-        throw 'Select a Category for this Product';
-      }
+              // Ensure a category is selected
+              if (selectedCategory.value == null) {
+                throw 'Select a Category for this Product';
+              }
 
-      // Update category if it's changed
-      updateCategory(product, selectedCategory.value!.id);
+              // Update category if it's changed
+              updateCategory(product, selectedCategory.value!.id);
 
-      // Update target audience
-      product.targetAudience = targetAudience.value;
+              // Update target audience
+              product.targetAudience = targetAudience.value;
 
-      double singlePrice = double.tryParse(price.text.trim()) ?? 0;
-      double singleSalePrice = double.tryParse(salePrice.text.trim()) ?? 0;
-      int singleStock = int.tryParse(stock.text.trim()) ?? 0;
+              double singlePrice = double.tryParse(price.text.trim()) ?? 0;
+              double singleSalePrice = double.tryParse(salePrice.text.trim()) ??
+                  0;
+              int singleStock = int.tryParse(stock.text.trim()) ?? 0;
 
-      // Check variation data if productType = variable
-      if (productType.value == ProductType.variable) {
-        if (ProductVariationsController.instance.productVariations.isEmpty) {
-          throw 'There are no Variations for the Product type Variable. Create some variations or change Product Type';
-        }
+              // Check variation data if productType = variable
+              if (productType.value == ProductType.variable) {
+                if (ProductVariationsController.instance.productVariations
+                    .isEmpty) {
+                  throw 'There are no Variations for the Product type Variable. Create some variations or change Product Type';
+                }
 
-        final variationCheckFailed = ProductVariationsController.instance.productVariations.any((element) =>
-        element.price.isNaN ||
-            element.price < 0 ||
-            element.salePrice.isNaN ||
-            element.salePrice < 0 ||
-            element.stock.isNaN ||
-            element.stock < 0 ||
-            element.images.isEmpty);
+                final variationCheckFailed = ProductVariationsController
+                    .instance.productVariations.any((element) =>
+                element.price.isNaN ||
+                    element.price < 0 ||
+                    element.salePrice.isNaN ||
+                    element.salePrice < 0 ||
+                    element.stock.isNaN ||
+                    element.stock < 0 ||
+                    element.images.isEmpty);
 
-        if (variationCheckFailed) {
-          throw 'Variation data is not correct. Please recheck variations.';
-        }
+                if (variationCheckFailed) {
+                  throw 'Variation data is not correct. Please recheck variations.';
+                }
 
-        // If single price is 0, calculate from variations
-        if (singlePrice == 0) {
-          final variations = ProductVariationsController.instance.productVariations;
-          if (variations.isNotEmpty) {
-            // Find the minimum price from variations
-            singlePrice = variations
-                .map((variation) => variation.price)
-                .reduce((min, price) => price < min ? price : min);
+                // If single price is 0, calculate from variations
+                if (singlePrice == 0) {
+                  final variations = ProductVariationsController.instance
+                      .productVariations;
+                  if (variations.isNotEmpty) {
+                    // Find the minimum price from variations
+                    singlePrice = variations
+                        .map((variation) => variation.price)
+                        .reduce((min, price) => price < min ? price : min);
 
-            // Update the price text controller
-            price.text = singlePrice.toString();
-          }
-        }
+                    // Update the price text controller
+                    price.text = singlePrice.toString();
+                  }
+                }
 
-        // If single sale price is 0, calculate from variations
-        if (singleSalePrice == 0) {
-          final variations = ProductVariationsController.instance.productVariations;
-          if (variations.isNotEmpty) {
-            // Find the minimum sale price from variations
-            singleSalePrice = variations
-                .where((variation) => variation.salePrice > 0)
-                .map((variation) => variation.salePrice)
-                .fold(0, (min, price) => min == 0 || price < min ? price : min);
+                // If single sale price is 0, calculate from variations
+                if (singleSalePrice == 0) {
+                  final variations = ProductVariationsController.instance
+                      .productVariations;
+                  if (variations.isNotEmpty) {
+                    // Find the minimum sale price from variations
+                    singleSalePrice = variations
+                        .where((variation) => variation.salePrice > 0)
+                        .map((variation) => variation.salePrice)
+                        .fold(0, (min, price) =>
+                    min == 0 || price < min
+                        ? price
+                        : min);
 
-            // Update the sale price text controller if a valid sale price was found
-            if (singleSalePrice > 0) {
-              salePrice.text = singleSalePrice.toString();
+                    // Update the sale price text controller if a valid sale price was found
+                    if (singleSalePrice > 0) {
+                      salePrice.text = singleSalePrice.toString();
+                    }
+                  }
+                  // If single stock is 0, calculate total stock from variations
+                  if (singleStock == 0) {
+                    // Sum up all variation stocks
+                    singleStock = variations
+                        .map((variation) => variation.stock)
+                        .fold(0, (sum, stock) => sum + stock);
+
+                    // Update the stock text controller
+                    stock.text = singleStock.toString();
+                  }
+                }
+              }
+
+              // Upload Product Thumbnail Image
+              thumbnailUploader.value = true;
+              final imagesController = ProductImagesController.instance;
+              if (imagesController.selectedThumbnailImageUrl.value?.isEmpty ??
+                  true) {
+                throw 'Select Product Thumbnail Image';
+              }
+
+              // Handle Product Variations
+              var variations = ProductVariationsController.instance
+                  .productVariations;
+              if (productType.value == ProductType.single &&
+                  variations.isNotEmpty) {
+                ProductVariationsController.instance.resetAllValues();
+                variations.value = [];
+              }
+
+              final specifications = specificationsController
+                  .getSpecifications();
+
+              // Map Product Data to Product Model safely
+              product
+                ..sku = ''
+                ..title = title.text.trim()
+                ..isFeatured = isFeatured.value
+                ..categoryId = selectedCategory.value!.id
+                ..categoryName = selectedCategory.value!.name
+                ..categorySlug = selectedCategory.value!.slug
+                ..description = description.text.trim()
+                ..productType = productType.value.toString()
+                ..targetAudience = targetAudience.value
+              // Handle optional fields safely
+                ..coupon = selectedCoupon.value?.title
+                ..stock = singleStock
+                ..price = singlePrice
+                ..salePrice = singleSalePrice
+                ..images = imagesController.additionalProductImageUrls
+                ..thumbnail = imagesController.selectedThumbnailImageUrl
+                    .value ?? ''
+                ..productAttributes = ProductAttributesController.instance
+                    .productAttributes
+                ..productVariations = variations
+                ..specifications = specifications
+                ..tags = TagController.instance.selectedTags
+                ..updatedAt = DateTime.now();
+
+              productDataUploader.value = true;
+              await productRepository.updateProduct(product);
+
+              // Register product categories if any
+              categoriesRelationshipUploader.value = true;
+              final productCategory = ProductCategoryModel(
+                  productId: product.id,
+                  categoryId: selectedCategory.value!.name
+              );
+              await productRepository.createProductCategory(productCategory);
+
+              // Update the Product List
+              ProductController.instance.updateItemFromLists(product);
+
+              // Call getSimilarProductsByScore to update similar products after the product update
+              try {
+                final similarProductController = Get.put(
+                    SimilarProductController());
+                await similarProductController
+                    .updateSimilaritiesAfterProductChange(product);
+                print(
+                    '✅ Similar products updated for product ID: ${product.id}');
+              } catch (e) {
+                print('❌ Error updating similar products: $e');
+                // Don't throw here to allow the product update to complete successfully
+              }
+
+
+              resetValues();
+
+              // Close the progress loader
+              RSFullScreenLoader.stopLoading();
+
+              // Show success message loader
+              showCompletionDialog();
+
+              RSLoaders.success(message: 'Product Has Been Updated');
+              Get.offNamed(RSRoutes.products);
+            } catch (e) {
+              RSFullScreenLoader.stopLoading();
+              RSLoaders.error(message: e.toString());
             }
-          }
-          // If single stock is 0, calculate total stock from variations
-          if (singleStock == 0) {
-            // Sum up all variation stocks
-            singleStock = variations
-                .map((variation) => variation.stock)
-                .fold(0, (sum, stock) => sum + stock);
+          });
+    }
 
-            // Update the stock text controller
-            stock.text = singleStock.toString();
-          }
-        }
-      }
-
-      // Upload Product Thumbnail Image
-      thumbnailUploader.value = true;
-      final imagesController = ProductImagesController.instance;
-      if (imagesController.selectedThumbnailImageUrl.value?.isEmpty ?? true) {
-        throw 'Select Product Thumbnail Image';
-      }
-
-      // Handle Product Variations
-      var variations = ProductVariationsController.instance.productVariations;
-      if (productType.value == ProductType.single && variations.isNotEmpty) {
-        ProductVariationsController.instance.resetAllValues();
-        variations.value = [];
-      }
-
-      final specifications = specificationsController.getSpecifications();
-
-      // Map Product Data to Product Model safely
-      product
-        ..sku = ''
-        ..title = title.text.trim()
-        ..isFeatured = isFeatured.value
-        ..categoryId = selectedCategory.value!.id
-        ..categoryName = selectedCategory.value!.name
-        ..categorySlug = selectedCategory.value!.slug
-        ..description = description.text.trim()
-        ..productType = productType.value.toString()
-        ..targetAudience = targetAudience.value
-      // Handle optional fields safely
-        ..coupon = selectedCoupon.value?.title
-        ..stock = singleStock
-        ..price = singlePrice
-        ..salePrice = singleSalePrice
-        ..images = imagesController.additionalProductImageUrls
-        ..thumbnail = imagesController.selectedThumbnailImageUrl.value ?? ''
-        ..productAttributes = ProductAttributesController.instance.productAttributes
-        ..productVariations = variations
-        ..specifications = specifications
-        ..tags = TagController.instance.selectedTags
-        ..updatedAt =  DateTime.now();
-
-      productDataUploader.value = true;
-      await ProductRepository.instance.updateProduct(product);
-
-      // Register product categories if any
-      categoriesRelationshipUploader.value = true;
-      final productCategory = ProductCategoryModel(
-          productId: product.id,
-          categoryId: selectedCategory.value!.name
-      );
-      await ProductRepository.instance.createProductCategory(productCategory);
-
-      // Update the Product List
-      ProductController.instance.updateItemFromLists(product);
-
-      // Call getSimilarProductsByScore to update similar products after the product update
+    Future<void> productViews(ProductModel product) async {
       try {
-        final similarProductController = Get.put(SimilarProductController());
-        await similarProductController.updateSimilaritiesAfterProductChange(product);
-        print('✅ Similar products updated for product ID: ${product.id}');
+        print("🔄 Fetching total views...");
+
+        int views = await productRepository.fetchTotalViews(product.id);
+
+        totalViews.value = views;
+
+        print("✅ Total views updated: $views");
       } catch (e) {
-        print('❌ Error updating similar products: $e');
-        // Don't throw here to allow the product update to complete successfully
+        print("❌ Error fetching total views: $e");
       }
-
-
-      resetValues();
-
-      // Close the progress loader
-      RSFullScreenLoader.stopLoading();
-
-      // Show success message loader
-      showCompletionDialog();
-    } catch (e) {
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Oh Snap', message: e.toString());
     }
-  }
 
-  Future<void> productViews(ProductModel product) async {
-    try {
-      print("🔄 Fetching total views...");
+    Future<void> wishlistViews(ProductModel product) async {
+      try {
+        print("🔄 Fetching total views...");
 
-      int views = await productRepository.fetchTotalViews(product.id);
+        int views = await productRepository.getWishlistCount(product.id);
 
-      totalViews.value = views;
+        wishlist.value = views;
 
-      print("✅ Total views updated: $views");
-    } catch (e) {
-      print("❌ Error fetching total views: $e");
+        print("✅ Total views updated: $views");
+      } catch (e) {
+        print("❌ Error fetching total views: $e");
+      }
     }
-  }
 
-  Future<void> wishlistViews(ProductModel product) async {
-    try {
-      print("🔄 Fetching total views...");
 
-      int views = await productRepository.getWishlistCount(product.id);
+    void resetValues() {
+      isLoading.value = false;
+      isFeatured.value = false;
+      productType.value = ProductType.single;
+      productVisibility.value = ProductVisibility.hidden;
+      stockPriceFormKey.currentState?.reset();
+      titleDescriptionFormKey.currentState?.reset();
+      title.clear();
+      description.clear();
+      stock.clear();
+      price.clear();
+      salePrice.clear();
+      brandTextField.clear();
+      selectedBrand.value = null;
+      selectedCategory.value = null;
+      selectedCoupon.value = null;
+      tags.clear();
+      ProductVariationsController.instance.resetAllValues();
+      ProductAttributesController.instance.resetProductAttributes();
 
-      wishlist.value = views;
-
-      print("✅ Total views updated: $views");
-    } catch (e) {
-      print("❌ Error fetching total views: $e");
+      // Reset Upload flags
+      thumbnailUploader.value = false;
+      additionalImagesUploader.value = false;
+      productDataUploader.value = false;
+      categoriesRelationshipUploader.value = false;
     }
-  }
 
+    // Show progress Dialog
+    void showProgressDialog() {
+      showDialog(
+        context: Get.context!,
+        barrierDismissible: false,
+        builder: (context) =>
+            PopScope(
+                canPop: false,
+                child: AlertDialog(
+                  title: Text('Creating Product'),
+                  content: Obx(
+                          () =>
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(RSImages.creatingProductIllustration,
+                                  height: 200, width: 200),
+                              SizedBox(height: RSSizes.spaceBtwItems),
+                              buildCheckBox(
+                                  'ThumbnailImage', thumbnailUploader),
+                              buildCheckBox('Additional Images',
+                                  additionalImagesUploader),
+                              buildCheckBox(
+                                  'Product Data, Attributes & variations',
+                                  productDataUploader),
+                              buildCheckBox('Product Categories',
+                                  categoriesRelationshipUploader),
+                              SizedBox(height: RSSizes.spaceBtwItems),
+                              Text('Sit Tight, Your Product is Uploading....'),
+                            ],
+                          )
+                  ),
+                )),
+      );
+    }
 
-  void resetValues(){
-    isLoading.value = false;
-    isFeatured.value = false;
-    productType.value = ProductType.single;
-    productVisibility.value = ProductVisibility.hidden;
-    stockPriceFormKey.currentState?.reset();
-    titleDescriptionFormKey.currentState?.reset();
-    title.clear();
-    description.clear();
-    stock.clear();
-    price.clear();
-    salePrice.clear();
-    brandTextField.clear();
-    selectedBrand.value = null;
-    selectedCategory.value = null;
-    selectedCoupon.value = null;
-    tags.clear();
-    ProductVariationsController.instance.resetAllValues();
-    ProductAttributesController.instance.resetProductAttributes();
-
-    // Reset Upload flags
-    thumbnailUploader.value  = false;
-    additionalImagesUploader.value = false;
-    productDataUploader.value = false;
-    categoriesRelationshipUploader.value = false;
-  }
-
-  // Show progress Dialog
-  void showProgressDialog() {
-    showDialog(
-      context: Get.context!,
-      barrierDismissible: false,
-      builder: (context) => PopScope(
-          canPop: false,
-          child: AlertDialog(
-            title: Text('Creating Product'),
-            content: Obx(
-                    () => Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(RSImages.creatingProductIllustration, height: 200,width: 200),
-                    SizedBox(height: RSSizes.spaceBtwItems),
-                    buildCheckBox('ThumbnailImage', thumbnailUploader),
-                    buildCheckBox('Additional Images', additionalImagesUploader),
-                    buildCheckBox('Product Data, Attributes & variations', productDataUploader),
-                    buildCheckBox('Product Categories', categoriesRelationshipUploader),
-                    SizedBox(height: RSSizes.spaceBtwItems),
-                    Text('Sit Tight, Your Product is Uploading....'),
-                  ],
-                )
-            ),
-          )),
-    );
-  }
-
-  Widget buildCheckBox(String label, RxBool value) {
-    return Row(
-      children: [
-        AnimatedSwitcher(duration: Duration(seconds: 2),
-          child: value.value
-              ? Icon(CupertinoIcons.checkmark_alt_circle_fill, color: Colors.blue)
-              : Icon(CupertinoIcons.checkmark_alt_circle)  ,
-        ),
-        SizedBox(width: RSSizes.spaceBtwItems),
-        Text(label),
-      ],
-    );
-  }
-
-  void showCompletionDialog() {
-    Get.dialog(
-        AlertDialog(
-          title: Text('Congratulations'),
-          actions: [
-            TextButton(
-                onPressed: (){
-                  Get.back();
-                  Get.back();
-                  resetValues();
-                }, child: Text('Go to Products'))
-          ],
-          content: Column(
-            children: [
-              Image.asset(RSImages.productsIllustration, height: 200, width: 200),
-              SizedBox(height: RSSizes.spaceBtwItems),
-              Text('Congratulations', style: Theme.of(Get.context!).textTheme.headlineSmall),
-              SizedBox(height: RSSizes.spaceBtwItems),
-              Text('Your Product Has Been Updated'),
-            ],
+    Widget buildCheckBox(String label, RxBool value) {
+      return Row(
+        children: [
+          AnimatedSwitcher(duration: Duration(seconds: 2),
+            child: value.value
+                ? Icon(
+                CupertinoIcons.checkmark_alt_circle_fill, color: Colors.blue)
+                : Icon(CupertinoIcons.checkmark_alt_circle),
           ),
-        )
-    );
+          SizedBox(width: RSSizes.spaceBtwItems),
+          Text(label),
+        ],
+      );
+    }
+
+    void showCompletionDialog() {
+      Get.dialog(
+          AlertDialog(
+            title: Text('Congratulations'),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Get.back();
+                    Get.back();
+                    resetValues();
+                  }, child: Text('Go to Products'))
+            ],
+            content: Column(
+              children: [
+                Image.asset(
+                    RSImages.productsIllustration, height: 200, width: 200),
+                SizedBox(height: RSSizes.spaceBtwItems),
+                Text('Congratulations', style: Theme
+                    .of(Get.context!)
+                    .textTheme
+                    .headlineSmall),
+                SizedBox(height: RSSizes.spaceBtwItems),
+                Text('Your Product Has Been Updated'),
+              ],
+            ),
+          )
+      );
+    }
   }
-}

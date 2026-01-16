@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../common/widgets/containers/rounded_container.dart';
 import '../../../../../../common/widgets/data_table/table_header.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
 import '../../../../../../routes/routes.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import '../../../../../../utils/popups/loader_animation.dart';
 import '../../../../controllers/banner/banner_controller.dart';
@@ -34,7 +36,19 @@ class BannerMobileScreen extends StatelessWidget {
                 return RSRoundedContainer(
                   child: Column(
                     children: [
-                      RSTableHeader(buttonText: 'Create New Banner', onPressed: () => Get.toNamed(RSRoutes.createBanner)),
+                      RSTableHeader(
+                        searchOnChanged: (query) => controller.searchQuery(query),
+
+                        primaryButton: AdminScreenGuard(
+                          permission: Permission.bannerCreate,
+                          behavior: GuardBehavior.disable,
+                          child: ElevatedButton(
+                            onPressed: () => Get.toNamed(RSRoutes.createBanner),
+                            child: const Text('Create New Banner'),
+                          ),
+                        ),
+
+                      ),
                       SizedBox(height: RSSizes.spaceBtwItems),
 
                       // Table

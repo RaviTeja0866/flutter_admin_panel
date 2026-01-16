@@ -45,7 +45,7 @@ abstract class RSBaseController<RS> extends GetxController {
       isLoading.value = false;
     } catch(e) {
       isLoading.value = false;
-      RSLoaders.errorSnackBar(title: 'Oh Snap!', message: e.toString());
+      RSLoaders.error(message: e.toString());
     }
   }
 
@@ -134,10 +134,10 @@ abstract class RSBaseController<RS> extends GetxController {
       removeItemFromLists(item);
 
       RSFullScreenLoader.stopLoading();
-      RSLoaders.successSnackBar(title: 'Item Deleted', message: 'Your item has Been Deleted');
+      RSLoaders.error(message: 'Your item has Been Deleted');
     } catch(e){
       RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Oh Snap!', message: e.toString());
+      RSLoaders.error(message: e.toString());
     }
 
   }

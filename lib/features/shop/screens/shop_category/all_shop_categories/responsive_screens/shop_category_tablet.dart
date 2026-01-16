@@ -8,6 +8,8 @@ import 'package:roguestore_admin_panel/utils/popups/loader_animation.dart';
 
 import '../../../../../../common/widgets/containers/rounded_container.dart';
 import '../../../../../../common/widgets/data_table/table_header.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../table/data_table.dart';
 
 class ShopCategoryTabletScreen extends StatelessWidget {
@@ -34,7 +36,19 @@ class ShopCategoryTabletScreen extends StatelessWidget {
                 return RSRoundedContainer(
                   child: Column(
                     children: [
-                      RSTableHeader(buttonText: 'Create New ShopCategory', onPressed: () => Get.toNamed(RSRoutes.createShopCategory)),
+                      RSTableHeader(
+                        searchOnChanged: (query) => controller.searchQuery(query),
+
+                        primaryButton: AdminScreenGuard(
+                          permission: Permission.shopCategoryCreate,
+                          behavior: GuardBehavior.disable,
+                          child: ElevatedButton(
+                            onPressed: () => Get.toNamed(RSRoutes.createShopCategory),
+                            child: const Text('Create New ShopCategory'),
+                          ),
+                        ),
+
+                      ),
                       SizedBox(height: RSSizes.spaceBtwItems),
 
                       // Table

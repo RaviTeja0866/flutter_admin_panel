@@ -1,33 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../routes/routes.dart';
 import '../../../../../../utils/constants/sizes.dart';
+import '../../../../controllers/coupon/edit_coupon_contorller.dart';
 import '../../../../models/coupon_model.dart';
 import '../widgets/edit_coupon_form.dart';
 
 class EditCouponTabletScreen extends StatelessWidget {
-  const EditCouponTabletScreen({super.key, required this.coupon});
-
-  final CouponModel coupon;
+  const EditCouponTabletScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(padding: EdgeInsets.all(RSSizes.defaultSpace),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // BreadCrumbs
-              RSBreadcrumbsWithHeading(returnToPreviousScreen: true,heading: 'Update Coupon', breadcrumbItems: [RSRoutes.categories, 'Update Coupon']),
-              SizedBox(height: RSSizes.spaceBtwSections),
+    final controller = EditCouponController.instance;
+    return Obx(() {
+      final coupon = controller.coupon.value;
 
-              EditCouponForm(coupon: coupon),
-            ],
+      if (coupon == null) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
+      return Scaffold(
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(RSSizes.defaultSpace),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // BreadCrumbs
+                RSBreadcrumbsWithHeading(
+                    returnToPreviousScreen: true,
+                    heading: 'Update Coupon',
+                    breadcrumbItems: [RSRoutes.categories, 'Update Coupon'],
+                  onBack: () {
+                    Get.offNamed(RSRoutes.coupons);
+                  },
+
+                ),
+                SizedBox(height: RSSizes.spaceBtwSections),
+
+                EditCouponForm(),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

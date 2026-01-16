@@ -6,7 +6,9 @@ import 'package:roguestore_admin_panel/features/shop/screens/shop_category/all_s
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../common/widgets/containers/rounded_container.dart';
 import '../../../../../../common/widgets/data_table/table_header.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
 import '../../../../../../routes/routes.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import '../../../../../../utils/popups/loader_animation.dart';
 import '../../../../controllers/shop_category/shop_category_controller.dart';
@@ -35,7 +37,19 @@ class ShopCategoryDesktopScreen extends StatelessWidget {
                 return RSRoundedContainer(
                   child: Column(
                     children: [
-                      RSTableHeader(buttonText: 'Create New ShopCategory', onPressed: () => Get.toNamed(RSRoutes.createShopCategory)),
+                      RSTableHeader(
+                        searchOnChanged: (query) => controller.searchQuery(query),
+
+                        primaryButton: AdminScreenGuard(
+                          permission: Permission.shopCategoryCreate,
+                          behavior: GuardBehavior.disable,
+                          child: ElevatedButton(
+                            onPressed: () => Get.toNamed(RSRoutes.createShopCategory),
+                            child: const Text('Create New ShopCategory'),
+                          ),
+                        ),
+
+                      ),
                       SizedBox(height: RSSizes.spaceBtwItems),
 
                       // Table

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:roguestore_admin_panel/features/shop/controllers/order/order_controller.dart';
 import 'package:roguestore_admin_panel/features/shop/models/order_model.dart';
+import 'package:roguestore_admin_panel/features/shop/screens/orders/all_orders/orders.dart';
 
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../routes/routes.dart';
@@ -16,6 +19,7 @@ class OrderDetailsDesktopScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(OrderController());
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
@@ -27,7 +31,7 @@ class OrderDetailsDesktopScreen extends StatelessWidget {
               RSBreadcrumbsWithHeading(
                 returnToPreviousScreen: true,
                 heading: order.id,
-                breadcrumbItems: [RSRoutes.orders],
+                breadcrumbItems: [RSRoutes.orders, 'Details'],
               ),
               SizedBox(height: RSSizes.spaceBtwSections),
 
@@ -59,7 +63,7 @@ class OrderDetailsDesktopScreen extends StatelessWidget {
                   Expanded(
                     child: Column(
                       children: [
-                        OrderCustomer(order: order),
+                        OrderCustomer(),
                         SizedBox(height: RSSizes.spaceBtwSections),
                       ],
                     ),

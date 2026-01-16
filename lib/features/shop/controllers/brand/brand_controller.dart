@@ -8,7 +8,7 @@ import '../../../../data/abstract/base_data_table_controlller.dart';
 class BrandController extends RSBaseController<BrandModel> {
   static BrandController get instance => Get.find();
 
-  final _brandRepository = Get.put(BrandRepository());
+  final _brandRepository = BrandRepository.instance;
   final categoryController = Get.put(CategoryController());
 
   @override

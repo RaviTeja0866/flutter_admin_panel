@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:roguestore_admin_panel/common/widgets/layouts/templates/site_layout.dart';
-import 'package:roguestore_admin_panel/features/personalization/screens/roles&permissions/create_admin_users/responsive_screens/create_roles_permissions_desktop.dart';
-import 'package:roguestore_admin_panel/features/personalization/screens/roles&permissions/create_admin_users/responsive_screens/create_roles_permissions_mobile.dart';
-import 'package:roguestore_admin_panel/features/personalization/screens/roles&permissions/create_admin_users/responsive_screens/create_roles_permissions_tablet.dart';
+import 'package:roguestore_admin_panel/features/personalization/screens/admin_users/create_admin_users/responsive_screens/create_admin_user_desktop.dart';
+import 'package:roguestore_admin_panel/features/personalization/screens/admin_users/create_admin_users/responsive_screens/create_admin_user_mobile.dart';
+import 'package:roguestore_admin_panel/features/personalization/screens/admin_users/create_admin_users/responsive_screens/create_admin_user_tablet.dart';
 
-class CreateRolesPermissionsScreen extends StatelessWidget {
-  const CreateRolesPermissionsScreen({super.key});
+class CreateAdminUsersScreen extends StatelessWidget {
+  const CreateAdminUsersScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return RSSiteTemplate(
-      desktop: CreateRolesPermissionsDesktopScreen(),
-      tablet: CreateRolesPermissionsTabletScreen(),
-      mobile: CreateRolesPermissionsMobileScreen(),
+      desktop: CreateAdminUserDesktopScreen(),
+      tablet: CreateAdminUserTabletScreen(),
+      mobile: CreateAdminUserMobileScreen(),
     );
   }
 }

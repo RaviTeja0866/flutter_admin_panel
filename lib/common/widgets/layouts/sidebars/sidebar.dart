@@ -8,6 +8,7 @@ import 'package:roguestore_admin_panel/utils/constants/enums.dart';
 import 'package:roguestore_admin_panel/utils/constants/image_strings.dart';
 import 'package:roguestore_admin_panel/utils/constants/sizes.dart';
 
+import '../../../../features/authentication/controllers/admin_auth_controller.dart';
 import '../../../../routes/routes.dart';
 import 'menu/menu_item.dart';
 
@@ -47,14 +48,14 @@ class RSSidebar extends StatelessWidget {
                       backgroundColor: Colors.transparent)),
                   Expanded(
                     child: Obx(
-                      () => Text(SettingsController.instance.settings.value.appName,
-                        style: Theme.of(context)
-                          .textTheme
-                          .headlineLarge,
+                      () => Text(
+                        SettingsController.instance.settings.value.appName,
+                        style: Theme.of(context).textTheme.headlineLarge,
                         overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  )],
+                  )
+                ],
               ),
               SizedBox(height: RSSizes.spaceBtwSections),
               Padding(
@@ -134,9 +135,24 @@ class RSSidebar extends StatelessWidget {
                         icon: Iconsax.bill,
                         itemName: 'AuditLogs'),
                     RSMenuItem(
-                        route: 'logout',
-                        icon: Iconsax.logout,
-                        itemName: 'Logout'),
+                        route: RSRoutes.adminUser,
+                        icon: Iconsax.user_tag,
+                        itemName: 'AdminUsers'),
+                    RSMenuItem(
+                        route: RSRoutes.roles,
+                        icon: Iconsax.shield_security,
+                        itemName: 'Roles'),
+
+                    RSMenuItem(
+                      route: 'logout', // special value, not a real route
+                      icon: Iconsax.logout,
+                      itemName: 'Logout',
+                      onTap: () async {
+                        await AdminAuthController.instance.logout();
+                        Get.offNamed(RSRoutes.login);
+                      },
+                    ),
+
                   ],
                 ),
               )

@@ -1,7 +1,14 @@
 import 'package:get/get.dart';
+import 'package:roguestore_admin_panel/data/services.cloud_storage/RBAC/access_denied_screen.dart';
 import 'package:roguestore_admin_panel/features/authentication/screens/forget_password/forget_password.dart';
 import 'package:roguestore_admin_panel/features/authentication/screens/reset_password/reset_password.dart';
+import 'package:roguestore_admin_panel/features/personalization/screens/admin_users/all_admin_users/admin_users.dart';
+import 'package:roguestore_admin_panel/features/personalization/screens/admin_users/create_admin_users/create_admin_user.dart';
+import 'package:roguestore_admin_panel/features/personalization/screens/admin_users/edit_admin_users/edit_admin_user.dart';
 import 'package:roguestore_admin_panel/features/personalization/screens/auditlogs/auditlogs.dart';
+import 'package:roguestore_admin_panel/features/personalization/screens/roles/all_roles/roles.dart';
+import 'package:roguestore_admin_panel/features/personalization/screens/roles/create_roles/create_roles.dart';
+import 'package:roguestore_admin_panel/features/personalization/screens/roles/edit_roles/edit_roles.dart';
 import 'package:roguestore_admin_panel/features/shop/screens/coupons/all_coupons/coupons.dart';
 import 'package:roguestore_admin_panel/features/shop/screens/coupons/create_coupon/create_coupon.dart';
 import 'package:roguestore_admin_panel/features/shop/screens/exchange/all_exchange/exchange.dart';
@@ -17,6 +24,7 @@ import 'package:roguestore_admin_panel/features/shop/screens/size_guide/edit_siz
 import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/routes/routes_middleware.dart';
 
+import '../features/authentication/screens/Splash.dart';
 import '../features/authentication/screens/login/login_screen.dart';
 import '../features/media/screens/media/media.dart';
 import '../features/personalization/screens/profile/profile.dart';
@@ -44,6 +52,8 @@ class RSAppRoute{
   static final List<GetPage> pages = [
     
     GetPage(name: RSRoutes.login, page: ()=> const LoginScreen()),
+    GetPage(name: RSRoutes.splash, page: ()=> const SplashScreen ()),
+
     GetPage(name: RSRoutes.forgetPassword, page: ()=> const ForgetPasswordScreen()),
     GetPage(name: RSRoutes.resetPassword, page: ()=> const ResetPasswordScreen()),
     GetPage(name: RSRoutes.dashboard, page: ()=> const DashbaordScreen(), middlewares: [RSRouteMiddleware()]),
@@ -75,7 +85,11 @@ class RSAppRoute{
 
     ///Orders
     GetPage(name: RSRoutes.orders, page: ()=> const OrdersScreen(), middlewares: [RSRouteMiddleware()]),
-    GetPage(name: RSRoutes.orderDetails, page: ()=> const OrderDetailScreen(), middlewares: [RSRouteMiddleware()]),
+    GetPage(
+      name: '/orders-details/:docId',
+      page: () => const OrderDetailScreen(),
+      middlewares: [RSRouteMiddleware()],
+    ),
 
     GetPage(name: RSRoutes.exchange, page: ()=> const ExchangeScreen(), middlewares: [RSRouteMiddleware()]),
     GetPage(name: RSRoutes.returns, page: ()=> const ReturnsScreen(), middlewares: [RSRouteMiddleware()]),
@@ -106,7 +120,16 @@ class RSAppRoute{
 
 
     GetPage(name: RSRoutes.profile, page: ()=> const ProfileScreen(), middlewares: [RSRouteMiddleware()]),
+    GetPage(name: RSRoutes.accessDeniedScreen, page: ()=> const AccessDeniedScreen(), middlewares: [RSRouteMiddleware()]),
 
+    GetPage(name: RSRoutes.adminUser, page: ()=> const AdminUsersScreen(), middlewares: [RSRouteMiddleware()]),
+    GetPage(name: RSRoutes.createAdminUser, page: ()=> const CreateAdminUsersScreen(), middlewares: [RSRouteMiddleware()]),
+    GetPage(name: RSRoutes.editAdminUser, page: ()=> const EditAdminUserScreen(), middlewares: [RSRouteMiddleware()]),
+
+
+    GetPage(name: RSRoutes.roles, page: ()=> const RolesScreen(), middlewares: [RSRouteMiddleware()]),
+    GetPage(name: RSRoutes.createRole, page: ()=> const CreateRolesScreen(), middlewares: [RSRouteMiddleware()]),
+    GetPage(name: RSRoutes.editRole, page: ()=> const EditRolesScreen(), middlewares: [RSRouteMiddleware()]),
 
   ];
 }

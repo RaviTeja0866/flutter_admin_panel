@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/features/shop/controllers/product/product_controller.dart';
 import '../../../../../../common/widgets/data_table/table_action_buttons.dart';
 import '../../../../../../common/widgets/images/rs_rounded_image.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
 import '../../../../../../routes/routes.dart';
 import '../../../../../../utils/constants/colors.dart';
 import '../../../../../../utils/constants/enums.dart';
@@ -19,11 +20,13 @@ class ProductRows extends DataTableSource {
     final product = controller.filteredItems[index];
     return DataRow2(
       selected: controller.selectedRows[index],
-      onTap: () => Get.toNamed(RSRoutes.editProduct, arguments: product),
-      onSelectChanged: (value) => controller.selectedRows[index] = value ?? false,
+      onTap: () => Get.offNamed(
+        '/editProduct/${product.id}',
+      ),
+      onSelectChanged: (value) =>
+          controller.selectedRows[index] = value ?? false,
       cells: [
-        DataCell(
-            Row(
+        DataCell(Row(
           children: [
             RSRoundedImage(
               width: 50,
@@ -36,7 +39,13 @@ class ProductRows extends DataTableSource {
             ),
             SizedBox(width: RSSizes.spaceBtwItems),
             Flexible(
-              child: Text(product.title, style: Theme.of(Get.context!).textTheme.bodyLarge!.apply(color: RSColors.primary), overflow: TextOverflow.ellipsis,
+              child: Text(
+                product.title,
+                style: Theme.of(Get.context!)
+                    .textTheme
+                    .bodyLarge!
+                    .apply(color: RSColors.primary),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -49,14 +58,22 @@ class ProductRows extends DataTableSource {
               width: 35,
               height: 35,
               padding: RSSizes.xs,
-              image: product.brand != null ? product.brand!.image : RSImages.defaultImage,
-              imageType: product.brand != null ? ImageType.network : ImageType.asset,
+              image: product.brand != null
+                  ? product.brand!.image
+                  : RSImages.defaultImage,
+              imageType:
+                  product.brand != null ? ImageType.network : ImageType.asset,
               borderRadius: RSSizes.borderRadiusMd,
               backgroundColor: RSColors.primaryBackground,
             ),
             SizedBox(width: RSSizes.spaceBtwItems),
             Flexible(
-              child: Text(product.brand != null ? product.brand!.name : '', style: Theme.of(Get.context!).textTheme.bodyLarge!.apply(color: RSColors.primary),
+              child: Text(
+                product.brand != null ? product.brand!.name : '',
+                style: Theme.of(Get.context!)
+                    .textTheme
+                    .bodyLarge!
+                    .apply(color: RSColors.primary),
               ),
             ),
           ],
@@ -64,8 +81,18 @@ class ProductRows extends DataTableSource {
         DataCell(Text('₹${controller.getProductPrice(product)}')), // Price
         DataCell(Text(product.formatedDate)), // Date
         DataCell(RSTableActionButtons(
-          onEditPressed: () => Get.toNamed(RSRoutes.editProduct, arguments:product),
-          onDeletePressed: () => controller.confirmAndDeleteItem(product),
+          onEditPressed: () => Get.offNamed(
+            '/editProduct/${product.id}',
+          ),
+          onDeletePressed: () {
+            ActionGuard.run(
+              permission: Permission.productDelete, // use correct enum
+              showDeniedScreen: true,
+              action: () async {
+                controller.confirmAndDeleteItem(product);
+              },
+            );
+          },
         )), // Actions
       ],
     );
@@ -78,5 +105,6 @@ class ProductRows extends DataTableSource {
   int get rowCount => controller.filteredItems.length;
 
   @override
-  int get selectedRowCount => controller.selectedRows.where((selected) => selected).length;
+  int get selectedRowCount =>
+      controller.selectedRows.where((selected) => selected).length;
 }

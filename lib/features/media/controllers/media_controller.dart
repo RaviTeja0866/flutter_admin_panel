@@ -74,8 +74,7 @@ class MediaController extends GetxController {
       loading.value = false;
     } catch (e) {
       loading.value = false;
-      RSLoaders.errorSnackBar(
-        title: 'Oh Snap',
+      RSLoaders.error(
         message: 'Unable to Fetch Images, Something Went wrong. Please Try Again.',
       );
     }
@@ -89,8 +88,7 @@ class MediaController extends GetxController {
       RxList<ImageModel> targetList = getTargetListByCategory();
 
       if (targetList.isEmpty) {
-        RSLoaders.warningSnackBar(
-            title: 'No Images',
+        RSLoaders.warning(
             message: 'No images found in the selected category.');
         loading.value = false;
         return;
@@ -113,16 +111,14 @@ class MediaController extends GetxController {
       targetList.addAll(newImages);
 
       if (newImages.isEmpty) {
-        RSLoaders.infoSnackBar(
-            title: 'No More Images',
+        RSLoaders.info(
             message: 'You have loaded all available images.');
       }
 
       loading.value = false;
     } catch (e) {
       loading.value = false;
-      RSLoaders.errorSnackBar(
-        title: 'Oh Snap',
+      RSLoaders.error(
         message: 'Unable to Load More Images. Something went wrong. Please try again.',
       );
     }
@@ -160,8 +156,7 @@ class MediaController extends GetxController {
         for (var file in files) {
           // Check if the file is already in the list to avoid duplicates
           if (selectedImagesToUpload.any((image) => image.filename == file.name)) {
-            RSLoaders.warningSnackBar(
-                title: 'Duplicate File',
+            RSLoaders.warning(
                 message: 'The file "${file.name}" is already selected.');
             continue;
           }
@@ -183,14 +178,12 @@ class MediaController extends GetxController {
               }
             });
           } catch (error) {
-            RSLoaders.warningSnackBar(
-                title: 'File Error',
+            RSLoaders.warning(
                 message: 'Error reading file: ${file.name}');
           }
         }
       } else {
-        RSLoaders.infoSnackBar(
-            title: 'No Files Selected',
+        RSLoaders.info(
             message: 'Please select valid image files.');
       }
     });
@@ -200,8 +193,7 @@ class MediaController extends GetxController {
   // Popup Confirmation Upload Images
   void uploadImagesConfirmation() {
     if (selectedPath.value == MediaCategory.folders) {
-      RSLoaders.warningSnackBar(
-          title: 'Select Folder',
+      RSLoaders.warning(
           message: 'Please select the folder to upload Images.');
       return;
     }
@@ -220,7 +212,9 @@ class MediaController extends GetxController {
   // Upload Images
   Future<void> uploadImages() async {
     try {
-      Get.back();
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
       uploadImagesLoader();
       MediaCategory selectedCategory = selectedPath.value;
       RxList<ImageModel> targetList;
@@ -262,8 +256,7 @@ class MediaController extends GetxController {
 
           targetList.add(uploadedImage);
         } catch (error) {
-          RSLoaders.warningSnackBar(
-              title: 'Upload Error',
+          RSLoaders.warning(
               message: 'Failed to upload image: ${selectedImage.filename}');
         }
       }).toList();
@@ -271,11 +264,17 @@ class MediaController extends GetxController {
       await Future.wait(uploadTasks);
 
       selectedImagesToUpload.clear();
+      showImagesUploaderSection.value = false;
       RSFullScreenLoader.stopLoading();
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        RSLoaders.success(
+          message: 'Images uploaded successfully',
+        );
+      });
     } catch (e) {
       RSFullScreenLoader.stopLoading();
-      RSLoaders.warningSnackBar(
-          title: 'Error Uploading Images',
+      RSLoaders.warning(
           message: 'Something went wrong while uploading your images.');
     }
   }
@@ -327,25 +326,20 @@ class MediaController extends GetxController {
     return path;
   }
 
-  // Popup confirmation to remove cloud image
-void removeCloudImageConfirmation(ImageModel image) {
-    // Delete Confirmation
-  RSDialogs.defaultDialog(context: Get.context!,
-  content: 'Are you sure you want to delete this image?',
-    onConfirm: (){
-    // close the previous Dialog Image Popup
-      Get.back();
-      removeCloudImage(image);
-    },
-  );
-}
+
+  void removeCloudImageConfirmation(ImageModel image) {
+    RSDialogs.defaultDialog(
+      context: Get.context!,
+      content: 'Are you sure you want to delete this image?',
+      onConfirm: () => removeCloudImage(image),
+    );
+  }
+
 
  // Remove Cloud Image
   void removeCloudImage(ImageModel image) async {
+    if (Get.isDialogOpen ?? false) Get.back();
     try{
-      // close the removeCLoudImageConfirmation () dialog
-      Get.back();
-
       // Show loader
       Get.defaultDialog(
         title: '',
@@ -386,41 +380,49 @@ void removeCloudImageConfirmation(ImageModel image) {
       update();
 
       RSFullScreenLoader.stopLoading();
-      RSLoaders.successSnackBar(title: 'Image Deleted', message: 'Image Successfully deleted from your Cloud storage');
+      RSLoaders.success(message: 'Image Successfully deleted from your Cloud storage');
     }catch(e){
       RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Oh Snap', message: e.toString());
+      RSLoaders.error(message: e.toString());
     }
   }
 
   // Images Selection Bottom Sheet
- Future<List<ImageModel>?> selectImagesFromMedia({List<String>? selectedUrls, bool allowSelection = true, bool multipleSelection = false}) async {
+  Future<List<ImageModel>?> selectImagesFromMedia({
+    List<String>? selectedUrls,
+    bool allowSelection = true,
+    bool multipleSelection = false,
+  }) async {
     showImagesUploaderSection.value = true;
 
-    List<ImageModel>? selectedImages = await Get.bottomSheet<List<ImageModel>>(
+    final selectedImages = await Get.bottomSheet<List<ImageModel>>(
       isScrollControlled: true,
       backgroundColor: RSColors.primaryBackground,
       FractionallySizedBox(
         heightFactor: 1,
-        child: SingleChildScrollView(
-          child: Padding(padding: EdgeInsets.all(RSSizes.defaultSpace),
+        child: Padding(
+          padding: EdgeInsets.all(RSSizes.defaultSpace),
           child: Column(
             children: [
               MediaUploader(),
-              MediaContent(
-                allowSelection: allowSelection,
-                alreadySelectedUrls: selectedUrls ?? [],
-                allowMultipleSelection: multipleSelection,
-              )
-
+              Expanded(
+                child: MediaContent(
+                  allowSelection: allowSelection,
+                  alreadySelectedUrls: selectedUrls ?? [],
+                  allowMultipleSelection: multipleSelection,
+                  onImageSelected: (images) {
+                    // ✅ SAFE: does NOT touch snackbar
+                    Navigator.of(Get.context!).pop(images);
+                  },
+                ),
+              ),
             ],
-          ),
           ),
         ),
       ),
     );
 
     return selectedImages;
- }
+  }
 
 }

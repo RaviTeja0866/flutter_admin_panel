@@ -24,8 +24,7 @@ class ExchangeController extends RSBaseController<ExchangeRequestModel> {
       final items = await _exchangeRepository.getAllExchanges();
       return items;
     } catch (e) {
-      RSLoaders.warningSnackBar(
-        title: 'Error',
+      RSLoaders.warning(
         message: 'Failed to load exchange requests.',
       );
       rethrow;
@@ -72,12 +71,11 @@ class ExchangeController extends RSBaseController<ExchangeRequestModel> {
       updateItemFromLists(exchange);
       exchangeStatus.value = newStatus;
 
-      RSLoaders.successSnackBar(
-        title: 'Updated',
+      RSLoaders.success(
         message: 'Exchange Status Updated',
       );
     } catch (e) {
-      RSLoaders.warningSnackBar(title: 'Error', message: e.toString());
+      RSLoaders.warning(message: e.toString());
     } finally {
       statusLoader.value = false;
     }

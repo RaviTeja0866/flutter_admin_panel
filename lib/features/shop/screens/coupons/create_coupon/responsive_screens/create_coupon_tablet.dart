@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/utils/constants/sizes.dart';
 
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
@@ -17,7 +18,14 @@ class CreateCouponTabletScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BreadCrumbs
-              RSBreadcrumbsWithHeading(returnToPreviousScreen: true, heading: 'Create Coupon', breadcrumbItems: [RSRoutes.coupons, 'Create Coupon']),
+              RSBreadcrumbsWithHeading(returnToPreviousScreen: true,
+                  heading: 'Create Coupon',
+                  breadcrumbItems: [RSRoutes.coupons, 'Create Coupon'],
+                onBack: () {
+                  Get.offNamed(RSRoutes.coupons);
+                },
+
+              ),
               SizedBox(height: RSSizes.spaceBtwSections),
 
               CreateCouponForm(),

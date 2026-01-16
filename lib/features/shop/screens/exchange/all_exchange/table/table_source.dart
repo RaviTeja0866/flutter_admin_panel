@@ -7,7 +7,9 @@ import 'package:roguestore_admin_panel/features/shop/controllers/exchange/exchan
 import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/helpers/helper_functions.dart';
 
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
 import '../../../../../../utils/constants/colors.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 
 class ExchangeRows extends DataTableSource {
@@ -88,8 +90,15 @@ class ExchangeRows extends DataTableSource {
               '${RSRoutes.exchange}/${item.docId}',
               arguments: item,
             ),
-            onDeletePressed: () => controller.confirmAndDeleteItem(item),
-          ),
+            onDeletePressed: () {
+              ActionGuard.run(
+                permission: Permission.exchangeDelete, // use correct enum
+                showDeniedScreen: true,
+                action: () async {
+                  controller.confirmAndDeleteItem(item);
+                },
+              );
+            },          ),
         ),
       ],
     );

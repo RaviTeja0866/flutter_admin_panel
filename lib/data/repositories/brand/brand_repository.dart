@@ -29,6 +29,25 @@ class BrandRepository extends GetxController{
     }
   }
 
+
+  /// Get brand by ID (REQUIRED for edit + reload)
+  Future<BrandModel> getBrandById(String id) async {
+    try {
+      final doc = await _db.collection('Brands').doc(id).get();
+
+      if (!doc.exists) {
+        throw 'Brand not found';
+      }
+      return BrandModel.fromSnapshot(doc);
+    } on FirebaseException catch (e) {
+      throw RSFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw RSPlatformException(e.code).message;
+    } catch (e) {
+      throw 'Something went wrong. Please try again';
+    }
+  }
+
   // Get all Brands from the 'BrandCategory' collection
   Future<List<BrandCategoryModel>> getAllBrandCategories() async {
     try {
@@ -103,7 +122,7 @@ class BrandRepository extends GetxController{
       final brandData = brand.toJson();
 
       // Check if the document exists first
-      final brandDocRef = _db.collection('brands').doc(brand.id);
+      final brandDocRef = _db.collection('Brands').doc(brand.id);
       final docSnapshot = await brandDocRef.get();
 
       if (docSnapshot.exists) {

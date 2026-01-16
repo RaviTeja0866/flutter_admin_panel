@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../common/widgets/containers/rounded_container.dart';
 import '../../../../../../common/widgets/data_table/table_header.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
 import '../../../../../../routes/routes.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import '../../../../../../utils/popups/loader_animation.dart';
 import '../../../../controllers/brand/brand_controller.dart';
@@ -31,7 +33,19 @@ class BrandsTabletScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     // Table Header
-                    RSTableHeader(buttonText: 'Create New Brand', onPressed: () => Get.toNamed(RSRoutes.createBrand)),
+                    RSTableHeader(
+                      searchOnChanged: (query) => controller.searchQuery(query),
+
+                      primaryButton: AdminScreenGuard(
+                        permission: Permission.brandCreate,
+                        behavior: GuardBehavior.disable,
+                        child: ElevatedButton(
+                          onPressed: () => Get.toNamed(RSRoutes.createBrand),
+                          child: const Text('Create New Brand'),
+                        ),
+                      ),
+
+                    ),
                     SizedBox(height: RSSizes.spaceBtwItems),
 
                     // Table

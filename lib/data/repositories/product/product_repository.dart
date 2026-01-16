@@ -31,6 +31,26 @@ class ProductRepository extends GetxController {
     }
   }
 
+  Future<ProductModel> getProductById(String productId) async {
+    try {
+      final doc =
+      await _db.collection('Products').doc(productId).get();
+
+      if (!doc.exists) {
+        throw 'Product not found';
+      }
+
+      return ProductModel.fromSnapshot(doc);
+    } on FirebaseException catch (e) {
+      throw RSFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw RSPlatformException(e.code).message;
+    } catch (e) {
+      throw 'Failed to fetch product';
+    }
+  }
+
+
   // Get all ProductCategories from the 'ProductCategory' collection
   Future<List<ProductCategoryModel>> getProductCategories(
       String productId) async {

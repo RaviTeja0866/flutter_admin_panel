@@ -3,9 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/data/repositories/authentication/authentication_repository.dart';
-import 'package:roguestore_admin_panel/features/personalization/models/user_model.dart';
+import 'package:roguestore_admin_panel/features/personalization/models/admin_model.dart';
 
 import '../../../features/shop/models/order_model.dart';
+import '../../../features/shop/models/user_model.dart';
 import '../../../utils/exceptions/firebase_auth_exceptions.dart';
 import '../../../utils/exceptions/format_exceptions.dart';
 import '../../../utils/exceptions/platform_exceptions.dart';
@@ -67,21 +68,6 @@ Future<UserModel> fetchUserDetails(String id) async{
   }
 }
 
-  // Function to fetch user data based on user Id.
-  Future<UserModel> fetchAdminDetails() async {
-    try {
-      final docSnapshot = await _db.collection('Users').doc(AuthenticationRepository.instance.authUser!.uid).get();
-      return UserModel.fromSnapshot(docSnapshot);
-    } on FirebaseAuthException catch (e) {
-      throw RSFirebaseAuthException(e.code).message;
-    } on FormatException catch (_) {
-      throw const RSFormatException();
-    } on PlatformException catch (e) {
-      throw RSPlatformException(e.code).message;
-    } catch (e) {
-      throw 'Something went wrong. $e';
-    }
-  }
 
   // Function to fetch users details based on user id
   Future<List<OrderModel>> fetchUserOrders(String  userId) async{

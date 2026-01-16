@@ -9,6 +9,9 @@ import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/constants/sizes.dart';
 import 'package:roguestore_admin_panel/utils/popups/loader_animation.dart';
 
+import '../../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
+import '../../../../../../utils/constants/enums.dart';
+
 class CouponMobileScreen extends StatelessWidget {
   const CouponMobileScreen({super.key});
 
@@ -31,10 +34,17 @@ class CouponMobileScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     RSTableHeader(
-                      buttonText: 'Create New Coupon',
-                      onPressed: () => Get.toNamed(RSRoutes.createCoupon),  // Navigate to the create coupon page
-                      searchController: controller.searchController,
-                      searchOnChanged: (query) => controller.searchQuery(query),  // Filter coupons by search query
+                      searchOnChanged: (query) => controller.searchQuery(query),
+
+                      primaryButton: AdminScreenGuard(
+                        permission: Permission.couponCreate,
+                        behavior: GuardBehavior.disable,
+                        child: ElevatedButton(
+                          onPressed: () => Get.toNamed(RSRoutes.createCoupon),
+                          child: const Text('Create New Coupon'),
+                        ),
+                      ),
+
                     ),
                     SizedBox(height: RSSizes.spaceBtwItems),
 

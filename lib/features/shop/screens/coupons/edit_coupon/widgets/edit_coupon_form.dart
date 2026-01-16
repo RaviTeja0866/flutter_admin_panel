@@ -9,182 +9,172 @@ import '../../../../../../utils/constants/colors.dart';
 import '../../../../controllers/coupon/edit_coupon_contorller.dart';
 
 class EditCouponForm extends StatelessWidget {
-  final CouponModel coupon;
-
-  const EditCouponForm({super.key, required this.coupon});
+  const EditCouponForm({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final editController = Get.put(EditCouponController());
-    // Initialize coupon data
-    editController.initCoupon(coupon);
+    final controller = EditCouponController.instance;
 
-    return RSRoundedContainer(
-      width: 500,
-      padding: EdgeInsets.all(RSSizes.defaultSpace),
-      child: Obx(
-            () => Form(
-          key: editController.formKey,
+    return Obx(() {
+      final coupon = controller.coupon.value;
+
+      // ⛔ Wait until coupon is loaded (refresh safe)
+      if (coupon == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      return RSRoundedContainer(
+        width: 500,
+        padding: EdgeInsets.all(RSSizes.defaultSpace),
+        child: Form(
+          key: controller.formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Heading
-              SizedBox(height: RSSizes.sm),
-              Text('Edit Coupon', style: Theme.of(context).textTheme.headlineMedium),
+              Text('Edit Coupon',
+                  style: Theme.of(context).textTheme.headlineMedium),
               SizedBox(height: RSSizes.spaceBtwSections),
 
-              // Coupon Code Text Field
+              // Coupon Code
               TextFormField(
-                controller: editController.code,
-                validator: (value) => RSValidator.validateEmptyText('Coupon Code', value),
+                controller: controller.code,
+                validator: (v) =>
+                    RSValidator.validateEmptyText('Coupon Code', v),
                 textCapitalization: TextCapitalization.characters,
-                decoration: InputDecoration(
-                    labelText: 'Coupon Code', prefixIcon: Icon(Iconsax.ticket)),
+                decoration: const InputDecoration(
+                  labelText: 'Coupon Code',
+                  prefixIcon: Icon(Iconsax.ticket),
+                ),
               ),
               SizedBox(height: RSSizes.spaceBtwInputFields),
 
-              // Discount Type Dropdown
+              // Discount Type
               DropdownButtonFormField<String>(
-                value: editController.discountType.value,
-                items: ['flat', 'percentage']
-                    .map((e) => DropdownMenuItem<String>(value: e, child: Text(e.capitalize!)))
+                value: controller.discountType.value,
+                items: const ['flat', 'percentage']
+                    .map((e) =>
+                    DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
-                onChanged: (value) => editController.discountType.value = value!,
-                validator: (value) => value == null ? 'Please select a discount type' : null,
-                decoration: InputDecoration(
-                    labelText: 'Discount Type', prefixIcon: Icon(Iconsax.discount_shape)),
+                onChanged: (v) => controller.discountType.value = v!,
+                decoration: const InputDecoration(
+                  labelText: 'Discount Type',
+                  prefixIcon: Icon(Iconsax.discount_shape),
+                ),
               ),
               SizedBox(height: RSSizes.spaceBtwInputFields),
 
-              // Discount Amount Text Field (depends on discount type)
-              Obx(() {
-                return TextFormField(
-                  controller: editController.discountAmount,
-                  validator: (value) => RSValidator.validatePositiveNumber('Discount Amount', value),
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: editController.discountType.value == 'percentage'
-                        ? 'Discount Percentage'
-                        : 'Discount Amount',
-                    prefixIcon: Icon(Iconsax.dollar_circle),
-                  ),
-                );
-              }),
-              SizedBox(height: RSSizes.spaceBtwInputFields),
-
-              // Minimum Purchase Text Field
+              // Discount Value
               TextFormField(
-                controller: editController.minimumPurchase,
-                validator: (value) => RSValidator.validatePositiveNumber('Minimum Purchase', value),
+                controller: controller.discountType.value == 'percentage'
+                    ? controller.discountPercentage
+                    : controller.discountAmount,
+                validator: (v) =>
+                    RSValidator.validatePositiveNumber('Discount', v),
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                    labelText: 'Minimum Purchase', prefixIcon: Icon(Iconsax.ticket_star)),
+                  labelText: controller.discountType.value == 'percentage'
+                      ? 'Discount Percentage'
+                      : 'Discount Amount',
+                  prefixIcon: const Icon(Iconsax.dollar_circle),
+                ),
               ),
               SizedBox(height: RSSizes.spaceBtwInputFields),
 
-              // Start Date Picker
+              // Minimum Purchase
               TextFormField(
-                readOnly: true,
-                controller: TextEditingController(text: editController.formatDate(editController.startDate.value)),
-                onTap: () => editController.selectStartDate(context),
-                decoration: InputDecoration(
-                    labelText: 'Start Date', prefixIcon: Icon(Iconsax.calendar)),
+                controller: controller.minimumPurchase,
+                validator: (v) =>
+                    RSValidator.validatePositiveNumber('Minimum Purchase', v),
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Minimum Purchase',
+                  prefixIcon: Icon(Iconsax.ticket_star),
+                ),
               ),
               SizedBox(height: RSSizes.spaceBtwInputFields),
 
-              // End Date Picker
+              // Start Date
               TextFormField(
+                controller: controller.startDateController,
                 readOnly: true,
-                controller: TextEditingController(text: editController.formatDate(editController.expiryDate.value)),
-                onTap: () => editController.expiryDate(context as DateTime?),
-                decoration: InputDecoration(
-                    labelText: 'End Date', prefixIcon: Icon(Iconsax.calendar_2)),
+                onTap: () => controller.selectStartDate(context),
+                decoration: const InputDecoration(
+                  labelText: 'Start Date',
+                  prefixIcon: Icon(Iconsax.calendar),
+                ),
               ),
               SizedBox(height: RSSizes.spaceBtwInputFields),
 
-              // Terms and Conditions Section
-              Text(
-                'Terms & Conditions:',
-                style: Theme.of(context).textTheme.headlineMedium,
+              // End Date
+              TextFormField(
+                controller: controller.endDateController,
+                readOnly: true,
+                onTap: () => controller.selectExpiryDate(context),
+                decoration: const InputDecoration(
+                  labelText: 'End Date',
+                  prefixIcon: Icon(Iconsax.calendar_2),
+                ),
               ),
+              SizedBox(height: RSSizes.spaceBtwInputFields),
+
+              // Terms
+              Text('Terms & Conditions',
+                  style: Theme.of(context).textTheme.titleMedium),
               SizedBox(height: RSSizes.sm),
 
-              // Row to place Button and Text Field side by side
               Row(
                 children: [
-                  // Add Term TextField
                   Expanded(
-                    child: TextFormField(
-                      controller: editController.termsController,
-                      decoration: InputDecoration(
-                        labelText: 'Add New a term',
+                    child: TextField(
+                      controller: controller.termsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Add term',
                         prefixIcon: Icon(Iconsax.text),
                       ),
                     ),
                   ),
-                  SizedBox(width: RSSizes.sm), // Space between the text field and button
-
-                  // Add Term Button
+                  SizedBox(width: RSSizes.sm),
                   ElevatedButton(
-                    onPressed: () {
-                      if (editController.termsController.text.isNotEmpty) {
-                        editController.addTerm(); // Add the term to the list
-                      }
-                    },
-                    child: Text('Add'),
+                    onPressed: controller.addTerm,
+                    child: const Text('Add'),
                   ),
                 ],
               ),
               SizedBox(height: RSSizes.spaceBtwInputFields),
 
-              // List of terms with delete functionality
-              Obx(() {
-                return ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: editController.offerTerms.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      leading: Icon(Icons.check_circle_outline, color: RSColors.success),
-                      title: Text(editController.offerTerms[index]),
-                      trailing: IconButton(
-                        icon: Icon(Iconsax.trash),
-                        color: RSColors.error,
-                        onPressed: () => editController.removeTerm(index),
-                      ),
-                      onTap: () {
-                        // Edit Term functionality (optional)
-                        editController.termsController.text = editController.offerTerms[index];
-                        editController.removeTerm(index); // Optionally remove to edit and re-add
-                      },
-                    );
-                  },
-                );
-              }),
-              SizedBox(height: RSSizes.spaceBtwInputFields * 2),
+              Obx(() => ListView.builder(
+                shrinkWrap: true,
+                itemCount: controller.offerTerms.length,
+                itemBuilder: (_, i) => ListTile(
+                  title: Text(controller.offerTerms[i]),
+                  trailing: IconButton(
+                    icon: const Icon(Iconsax.trash),
+                    onPressed: () => controller.removeTerm(i),
+                  ),
+                ),
+              )),
 
+              SizedBox(height: RSSizes.spaceBtwInputFields),
 
-              // IsActive Checkbox
               CheckboxListTile(
-                value: editController.isActive.value,
-                onChanged: (value) => editController.isActive.value = value ?? false,
-                title: Text('Is Active'),
+                value: controller.isActive.value,
+                onChanged: (v) => controller.isActive.value = v ?? false,
+                title: const Text('Active'),
               ),
-              SizedBox(height: RSSizes.spaceBtwInputFields * 2),
 
-              // Button
+              SizedBox(height: RSSizes.spaceBtwSections),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => editController.updateCoupon(coupon),
-                  child: Text('Update'),
+                  onPressed: controller.updateCoupon,
+                  child: const Text('Update Coupon'),
                 ),
               ),
-
-              SizedBox(height: RSSizes.spaceBtwInputFields * 2),
             ],
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

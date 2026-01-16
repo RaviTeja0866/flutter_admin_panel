@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import 'package:roguestore_admin_panel/features/shop/screens/shop_category/create_shop_category/widgets/create_shop_category_form.dart';
 import 'package:roguestore_admin_panel/features/shop/screens/size_guide/create_size_guide/widgets/create_size_guide_form.dart';
@@ -22,6 +23,10 @@ class CreateSizeGuideDesktopScreen extends StatelessWidget {
                 returnToPreviousScreen: true,
                 heading: 'Create SizeGuide',
                 breadcrumbItems: [RSRoutes.sizeGuide, 'Create SizeGuide'],
+                onBack: () {
+                  Get.offNamed(RSRoutes.sizeGuide);
+                },
+
               ),
               SizedBox(height: RSSizes.spaceBtwSections),
 

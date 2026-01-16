@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../routes/routes.dart';
@@ -12,12 +13,20 @@ class CreateCategoriesMobileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Padding(padding: EdgeInsets.all(RSSizes.defaultSpace),
+        child: Padding(
+          padding: EdgeInsets.all(RSSizes.defaultSpace),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BreadCrumbs
-              RSBreadcrumbsWithHeading(returnToPreviousScreen: true,heading: 'Create Category', breadcrumbItems: [RSRoutes.categories, 'Create Category']),
+              RSBreadcrumbsWithHeading(
+                  returnToPreviousScreen: true,
+                  heading: 'Create Category',
+                  breadcrumbItems: [RSRoutes.categories, 'Create Category'],
+                onBack: () {
+                  Get.offNamed(RSRoutes.categories);
+                },
+              ),
               SizedBox(height: RSSizes.spaceBtwSections),
 
               CreateCategoryForm(),

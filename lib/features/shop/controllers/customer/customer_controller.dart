@@ -1,12 +1,14 @@
 import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/data/abstract/base_data_table_controlller.dart';
 import 'package:roguestore_admin_panel/data/repositories/user/user_repository.dart';
-import 'package:roguestore_admin_panel/features/personalization/models/user_model.dart';
+import 'package:roguestore_admin_panel/features/personalization/models/admin_model.dart';
+
+import '../../models/user_model.dart';
 
 class CustomerController extends RSBaseController<UserModel> {
   static CustomerController get instance => Get.find();
 
-  final _customerRepository = Get.put(UserRepository());
+  final _customerRepository = UserRepository.instance;
 
   @override
   Future<List<UserModel>> fetchItems() async{

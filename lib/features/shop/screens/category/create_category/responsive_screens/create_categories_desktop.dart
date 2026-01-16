@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:roguestore_admin_panel/common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import 'package:roguestore_admin_panel/routes/routes.dart';
 import 'package:roguestore_admin_panel/utils/constants/sizes.dart';
@@ -12,17 +13,25 @@ class CreateCategoriesDesktopScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Padding(padding: EdgeInsets.all(RSSizes.defaultSpace),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // BreadCrumbs
-            RSBreadcrumbsWithHeading(returnToPreviousScreen: true, heading: 'Create Category', breadcrumbItems: [RSRoutes.categories, 'Create Category']),
-            SizedBox(height: RSSizes.spaceBtwSections),
+        child: Padding(
+          padding: EdgeInsets.all(RSSizes.defaultSpace),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // BreadCrumbs
+              RSBreadcrumbsWithHeading(
+                  returnToPreviousScreen: true,
+                  heading: 'Create Category',
+                  breadcrumbItems: [RSRoutes.categories, 'Create Category'],
+                onBack: () {
+                  Get.offNamed(RSRoutes.categories);
+                },
+              ),
+              SizedBox(height: RSSizes.spaceBtwSections),
 
-            CreateCategoryForm(),
-          ],
-        ),
+              CreateCategoryForm(),
+            ],
+          ),
         ),
       ),
     );

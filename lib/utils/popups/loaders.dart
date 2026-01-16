@@ -5,90 +5,97 @@ import 'package:roguestore_admin_panel/utils/constants/colors.dart';
 import 'package:roguestore_admin_panel/utils/helpers/helper_functions.dart';
 
 class RSLoaders {
-  static hideSnackBar() => ScaffoldMessenger.of(Get.context!).hideCurrentSnackBar();
+  static hideSnackBar() =>
+      ScaffoldMessenger.of(Get.context!).hideCurrentSnackBar();
 
-  static customToast({required message}) {
-    ScaffoldMessenger.of(Get.context!).showSnackBar(
-      SnackBar(
-        width: 500,
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-        backgroundColor: Colors.transparent,
-        content: Container(
-          padding: const EdgeInsets.all(12.0),
-          margin: const EdgeInsets.symmetric(horizontal: 30),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            color: RSHelperFunctions.isDarkMode(Get.context!) ? RSColors.darkerGrey.withOpacity(0.9) : RSColors.grey.withOpacity(0.9),
-          ),
-          child: Center(child: Text(message, style: Theme.of(Get.context!).textTheme.labelLarge)),
+  // -------------------------------
+  // Base Toast Snackbar
+  // -------------------------------
+  static _showToast({
+    required String message,
+    required Color color,
+    required IconData icon,
+    int duration = 3,
+  }) {
+    Get.snackbar(
+      '',
+      '',
+      titleText: const SizedBox(),
+      messageText: IntrinsicWidth(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              message,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(Get.context!)
+                  .textTheme
+                  .labelLarge
+                  ?.copyWith(color: Colors.white),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  static successSnackBar({required title, message = '', duration = 3}) {
-    Get.snackbar(
-      title,
-      message,
-      maxWidth: 600,
-      isDismissible: true,
-      shouldIconPulse: true,
-      colorText: Colors.white,
-      backgroundColor: RSColors.success,
       snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.only(bottom: 20),
+      backgroundColor: color,
+      borderRadius: 30,
       duration: Duration(seconds: duration),
-      margin: const EdgeInsets.all(10),
-      icon: const Icon(Iconsax.check, color: RSColors.white),
+      isDismissible: true,
+      shouldIconPulse: false,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
   }
 
-  static warningSnackBar({required title, message = ''}) {
-    Get.snackbar(
-      title,
-      message,
-      maxWidth: 600,
-      isDismissible: true,
-      shouldIconPulse: true,
-      colorText: RSColors.white,
-      backgroundColor: Colors.orange,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
-      margin: const EdgeInsets.all(20),
-      icon: const Icon(Iconsax.warning_2, color: RSColors.white),
+
+  // -------------------------------
+  // Success Toast
+  // -------------------------------
+  static success({required String message, int duration = 3}) {
+    _showToast(
+      message: message,
+      color: RSColors.success,
+      icon: Iconsax.check,
+      duration: duration,
     );
   }
 
-  static errorSnackBar({required title, message = ''}) {
-    Get.snackbar(
-      title,
-      message,
-      maxWidth: 600,
-      isDismissible: true,
-      shouldIconPulse: true,
-      colorText: RSColors.white,
-      backgroundColor: Colors.red.shade600,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
-      margin: const EdgeInsets.all(20),
-      icon: const Icon(Iconsax.warning_2, color: RSColors.white),
+  // -------------------------------
+  // Warning Toast
+  // -------------------------------
+  static warning({required String message, int duration = 3}) {
+    _showToast(
+      message: message,
+      color: RSColors.warning,
+      icon: Iconsax.warning_2,
+      duration: duration,
     );
   }
 
-  static infoSnackBar({required title, message = '', duration = 3}) {
-    Get.snackbar(
-      title,
-      message,
-      maxWidth: 600,
-      isDismissible: true,
-      shouldIconPulse: true,
-      colorText: Colors.white,
-      backgroundColor: RSColors.info, // Define a suitable color in RSColors
-      snackPosition: SnackPosition.BOTTOM,
-      duration: Duration(seconds: duration),
-      margin: const EdgeInsets.all(10),
-      icon: const Icon(Iconsax.info_circle, color: RSColors.white),
+  // -------------------------------
+  // Error Toast
+  // -------------------------------
+  static error({required String message, int duration = 3}) {
+    _showToast(
+      message: message,
+      color: RSColors.error,
+      icon: Iconsax.warning_2,
+      duration: duration,
+    );
+  }
+
+  // -------------------------------
+  // Info Toast
+  // -------------------------------
+  static info({required String message, int duration = 3}) {
+    _showToast(
+      message: message,
+      color: RSColors.info,
+      icon: Iconsax.info_circle,
+      duration: duration,
     );
   }
 }

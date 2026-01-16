@@ -5,12 +5,13 @@ import 'package:roguestore_admin_panel/common/widgets/data_table/table_action_bu
 import 'package:roguestore_admin_panel/common/widgets/images/rs_rounded_image.dart';
 import 'package:roguestore_admin_panel/features/shop/controllers/customer/customer_controller.dart';
 
+import '../../../../../../data/services.cloud_storage/RBAC/action_guard.dart';
 import '../../../../../../routes/routes.dart';
 import '../../../../../../utils/constants/colors.dart';
 import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/image_strings.dart';
 import '../../../../../../utils/constants/sizes.dart';
-import '../../../../../personalization/models/user_model.dart';
+import '../../../../../personalization/models/admin_model.dart';
 
 class CustomerRows extends DataTableSource {
   final controller = CustomerController.instance;
@@ -45,8 +46,15 @@ class CustomerRows extends DataTableSource {
         view: true,
         edit: false,
         onViewPressed: () => Get.toNamed(RSRoutes.customerDetails, arguments: customer),
-        onDeletePressed: () => controller.confirmAndDeleteItem(customer),
-      ))
+        onDeletePressed: () {
+          ActionGuard.run(
+            permission: Permission.customerDelete, // use correct enum
+            showDeniedScreen: true,
+            action: () async {
+              controller.confirmAndDeleteItem(customer);
+            },
+          );
+        },      ))
     ]);
   }
 

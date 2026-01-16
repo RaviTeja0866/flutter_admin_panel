@@ -5,6 +5,9 @@ import 'package:roguestore_admin_panel/data/repositories/banner/banner_repositor
 import 'package:roguestore_admin_panel/features/shop/controllers/banner/banner_controller.dart';
 import 'package:roguestore_admin_panel/features/shop/models/banner_model.dart';
 
+import '../../../../data/services.cloud_storage/RBAC/action_guard.dart';
+import '../../../../routes/routes.dart';
+import '../../../../utils/constants/enums.dart';
 import '../../../../utils/helpers/network_manager.dart';
 import '../../../../utils/popups/full_screen_loader.dart';
 import '../../../../utils/popups/loaders.dart';
@@ -19,7 +22,7 @@ class EditBannerController extends GetxController{
   final isActive = false.obs;
   final targetScreen = ''.obs;
   final formKey = GlobalKey<FormState>();
-  final repository = Get.put(BannerRepository());
+  final repository = BannerRepository.instance;
 
   // New Fields for Dynamic Banner Types
   final RxString bannerType = 'category'.obs;
@@ -27,12 +30,15 @@ class EditBannerController extends GetxController{
   final RxInt priority = 1.obs;
   Rx<DateTime?> startDate = Rx<DateTime?>(null);
   Rx<DateTime?> endDate = Rx<DateTime?>(null);
+  final Rxn<BannerModel> banner = Rxn<BannerModel>();
 
   // Date Controllers
   final startDateController = TextEditingController();
   final endDateController = TextEditingController();
   final TextEditingController bannerValueController = TextEditingController();
   final TextEditingController priorityController = TextEditingController();
+
+  bool _loaded = false;
 
   // Init Data
   void init(BannerModel banner){
@@ -55,6 +61,18 @@ class EditBannerController extends GetxController{
     }
 
     print("Banner Initialized: $banner");
+  }
+
+  Future<void> loadBanner(String bannerId) async {
+    if (_loaded) return;
+    _loaded = true;
+
+    print('📥 Loading banner: $bannerId');
+
+    final data = await repository.getBannerById(bannerId);
+     banner.value = data;
+
+    init(data);
   }
 
   // Pick Thumbnail Image from Media
@@ -101,57 +119,76 @@ class EditBannerController extends GetxController{
   }
 
   // Update Existing Banner
-  Future<void> updateBanner(BannerModel banner) async {
-    try{
-      print("Updating banner: ${banner.id}");
-      RSFullScreenLoader.popUpCircular();
+  Future<void> updateBanner() async {
+    await ActionGuard.run(
+        permission: Permission.bannerUpdate,
+        showDeniedScreen: true,
+        action: () async {
+      try {
+        print('🟡 [UPDATE BANNER] Started');
 
-      final isConnected = await NetworkManager.instance.isConnected();
-      if (!isConnected) {
-        print("No internet connection.");
+        RSFullScreenLoader.popUpCircular();
+
+        final item = banner.value;
+        if (item == null) {
+          RSFullScreenLoader.stopLoading();
+          print('❌ banner.value is NULL');
+          return;
+        }
+
+        item
+          ..imageUrl = imageURL.value
+          ..targetScreen = targetScreen.value
+          ..active = isActive.value
+          ..type = bannerType.value
+          ..value = bannerValue.value
+          ..startDate = startDate.value!
+          ..endDate = endDate.value!;
+
+        print('🔥 Updating banner in Firestore...');
+        await repository.updateBanner(item);
+
+        BannerController.instance.updateItemFromLists(item);
+
         RSFullScreenLoader.stopLoading();
-        return;
-      }
+        RSLoaders.success(
+          message: 'Banner updated successfully!',
+        );
 
-      if (!formKey.currentState!.validate()) {
-        print("Form validation failed.");
+        reset();
+        Get.offNamed(RSRoutes.banners);
+      } catch (e, s) {
         RSFullScreenLoader.stopLoading();
-        return;
+        print('❌ Update banner failed: $e');
+        print(s);
+        RSLoaders.error(message: e.toString());
       }
-
-      if (startDate.value == null || endDate.value == null) {
-        print("Validation Error: Start or End date missing.");
-        RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(title: 'Validation Error', message: 'Please fill all required fields.');
-        return;
-      }
-
-      if (startDate.value!.isAfter(endDate.value!)) {
-        print("Date Error: Start date is after expiry date.");
-        RSFullScreenLoader.stopLoading();
-        RSLoaders.errorSnackBar(title: 'Date Error', message: 'Start date cannot be after expiry date.');
-        return;
-      }
-
-      banner.imageUrl = imageURL.value;
-      banner.targetScreen = targetScreen.value;
-      banner.active = isActive.value;
-      banner.type = bannerType.value;
-      banner.value = bannerValue.value;
-      banner.startDate = startDate.value!;
-      banner.endDate = endDate.value!;
-
-      print("Sending updated banner data to repository...");
-      await repository.updateBanner(banner);
-      BannerController.instance.updateItemFromLists(banner);
-      RSFullScreenLoader.stopLoading();
-
-      print("Banner updated successfully.");
-      RSLoaders.successSnackBar(title: 'Success', message: 'Banner updated successfully!');
-    } catch (e) {
-      print("Error updating banner: $e");
-      RSFullScreenLoader.stopLoading();
-      RSLoaders.errorSnackBar(title: 'Oh Snap', message: e.toString());
-    }
+    });
   }
+
+  // ---------------------------------------------------------------------------
+// CLEANUP / RESET
+// ---------------------------------------------------------------------------
+  void reset() {
+    print('♻️ Resetting EditBannerController state');
+
+    imageURL.value = '';
+    isActive.value = false;
+    targetScreen.value = '';
+    bannerType.value = 'category';
+    bannerValue.value = '';
+    priority.value = 1;
+
+    startDate.value = null;
+    endDate.value = null;
+
+    startDateController.clear();
+    endDateController.clear();
+    bannerValueController.clear();
+    priorityController.clear();
+
+    banner.value = null;
+    _loaded = false;
+  }
+
 }

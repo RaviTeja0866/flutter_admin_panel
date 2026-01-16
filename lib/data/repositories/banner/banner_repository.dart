@@ -27,6 +27,24 @@ class BannerRepository extends GetxController{
     }
   }
 
+  /// Get banners by ID (REQUIRED for edit + reload)
+  Future<BannerModel> getBannerById(String id) async {
+    try {
+      final doc = await _db.collection('Banners').doc(id).get();
+
+      if (!doc.exists) {
+        throw 'Banner not found';
+      }
+      return BannerModel.fromSnapshot(doc);
+    } on FirebaseException catch (e) {
+      throw RSFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw RSPlatformException(e.code).message;
+    } catch (e) {
+      throw 'Something went wrong. Please try again';
+    }
+  }
+
   // Create a Banner in the 'Banners' collection
   Future<String> createBanner(BannerModel banner) async {
     try {

@@ -9,7 +9,7 @@ import '../../../../../../utils/constants/colors.dart';
 import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import '../../../../../../utils/formatters/formatter.dart';
-import '../../../../controllers/adminroles_controller.dart';
+import '../../../../controllers/admin_users/adminroles_controller.dart';
 import '../../../../models/admin_model.dart';
 
 
@@ -22,7 +22,7 @@ class AdminUsersRows extends DataTableSource {
 
     return DataRow2(
       onTap: () => Get.toNamed(
-        RSRoutes.rolesAndPermissions,
+        RSRoutes.adminUser,
         arguments: user,
         parameters: {'adminId': user.roleId},
       ),
@@ -34,17 +34,6 @@ class AdminUsersRows extends DataTableSource {
         DataCell(
           Row(
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: RSColors.primary.withOpacity(0.1),
-                child: Text(
-                  user.firstName.isNotEmpty
-                      ? user.firstName[0].toUpperCase()
-                      : '?',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(width: RSSizes.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,7 +95,7 @@ class AdminUsersRows extends DataTableSource {
             view: true,
             edit: false,
             onViewPressed: () => Get.toNamed(
-              RSRoutes.rolesAndPermissions,
+              RSRoutes.adminUser,
               arguments: user,
             ),
             onDeletePressed: () {

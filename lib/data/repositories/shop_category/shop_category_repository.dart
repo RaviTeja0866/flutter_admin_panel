@@ -65,6 +65,26 @@ class ShopCategoryRepository extends GetxController {
     }
   }
 
+  /// Get shop category by ID (WEB-SAFE, REQUIRED)
+  Future<ShopCategory> getById(String id) async {
+    try {
+      final doc = await _db.collection('ShopCategories').doc(id).get();
+
+      if (!doc.exists) {
+        throw 'ShopCategory not found';
+      }
+
+      return ShopCategory.fromSnapshot(doc);
+    } on FirebaseException catch (e) {
+      throw RSFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw RSPlatformException(e.code).message;
+    } catch (e) {
+      throw 'Something went wrong. Please try again';
+    }
+  }
+
+
   /// Update a shop category
   Future<void> updateShopCategory(ShopCategory category) async {
     try {

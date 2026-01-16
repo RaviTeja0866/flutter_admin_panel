@@ -27,6 +27,25 @@ class CouponRepository extends GetxController {
     }
   }
 
+
+  /// Get Coupon by ID (REQUIRED for edit + reload)
+  Future<CouponModel> getCouponById(String id) async {
+    try {
+      final doc = await _db.collection('Coupons').doc(id).get();
+
+      if (!doc.exists) {
+        throw 'Coupon not found';
+      }
+      return CouponModel.fromSnapshot(doc);
+    } on FirebaseException catch (e) {
+      throw RSFirebaseException(e.code).message;
+    } on PlatformException catch (e) {
+      throw RSPlatformException(e.code).message;
+    } catch (e) {
+      throw 'Something went wrong. Please try again';
+    }
+  }
+
   // Create a new Coupon document in the 'Coupons' collection
   Future<String> createCoupon(CouponModel coupon) async {
     try {

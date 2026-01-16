@@ -19,12 +19,22 @@ class App extends StatelessWidget {
       themeMode: ThemeMode.light,
       theme: RSAppTheme.lightTheme,
       darkTheme: RSAppTheme.darkTheme,
+
+      initialRoute: RSRoutes.splash,
+
       getPages: RSAppRoute.pages,
       initialBinding: GeneralBindings(),
-      initialRoute: RSRoutes.login,
-      unknownRoute: GetPage(name: '/page-not-found', page: ()=> const Scaffold(body: Center(child: Text('Page Not Found')))),
+
+      unknownRoute: GetPage(
+        name: '/page-not-found',
+        page: () => const Scaffold(
+          body: Center(child: Text('Page Not Found')),
+        ),
+      ),
+
       debugShowCheckedModeBanner: false,
       scrollBehavior: MyCustomScrollBehavior(),
+
     );
   }
 }

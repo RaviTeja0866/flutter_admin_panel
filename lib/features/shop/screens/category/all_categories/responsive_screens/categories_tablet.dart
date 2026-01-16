@@ -5,7 +5,9 @@ import 'package:roguestore_admin_panel/features/shop/controllers/category/catego
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../common/widgets/containers/rounded_container.dart';
 import '../../../../../../common/widgets/data_table/table_header.dart';
+import '../../../../../../data/services.cloud_storage/RBAC/admin_screen_guard.dart';
 import '../../../../../../routes/routes.dart';
+import '../../../../../../utils/constants/enums.dart';
 import '../../../../../../utils/constants/sizes.dart';
 import '../../../../../../utils/popups/loader_animation.dart';
 import '../table/data_table.dart';
@@ -31,10 +33,18 @@ class CategoriesTabletScreen extends StatelessWidget {
               RSRoundedContainer(
                 child: Column(
                   children: [
-                    RSTableHeader(buttonText: 'Create New Category',
-                        onPressed: () => Get.toNamed(RSRoutes.createCategory),
-                        searchController: controller.searchController,
-                      searchOnChanged:(query) => controller.searchQuery(query),
+                    RSTableHeader(
+                      searchOnChanged: (query) => controller.searchQuery(query),
+
+                      primaryButton: AdminScreenGuard(
+                        permission: Permission.categoryCreate,
+                        behavior: GuardBehavior.disable,
+                        child: ElevatedButton(
+                          onPressed: () => Get.toNamed(RSRoutes.createCategory),
+                          child: const Text('Create New Category'),
+                        ),
+                      ),
+
                     ),
                     SizedBox(height: RSSizes.spaceBtwItems),
 

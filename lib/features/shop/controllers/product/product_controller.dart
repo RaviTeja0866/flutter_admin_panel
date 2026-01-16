@@ -8,7 +8,7 @@ import '../../../../data/abstract/base_data_table_controlller.dart';
 class ProductController extends RSBaseController<ProductModel> {
   static ProductController get instance => Get.find();
 
-  final _productRepository = Get.put(ProductRepository());
+  final _productRepository = ProductRepository.instance;
 
   @override
   Future<List<ProductModel>> fetchItems() async {

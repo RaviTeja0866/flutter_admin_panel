@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../../../../common/widgets/breadcrumbs/breadcrumb_with_heading.dart';
 import '../../../../../../routes/routes.dart';
@@ -17,7 +18,14 @@ class CreateCouponMobileScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BreadCrumbs
-              RSBreadcrumbsWithHeading(returnToPreviousScreen: true, heading: 'Create Coupon', breadcrumbItems: [RSRoutes.coupons, 'Create Coupon']),
+              RSBreadcrumbsWithHeading(returnToPreviousScreen: true,
+                  heading: 'Create Coupon',
+                  breadcrumbItems: [RSRoutes.coupons, 'Create Coupon'],
+                onBack: () {
+                  Get.offNamed(RSRoutes.coupons);
+                },
+
+              ),
               SizedBox(height: RSSizes.spaceBtwSections),
 
               CreateCouponForm(),

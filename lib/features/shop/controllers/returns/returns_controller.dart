@@ -26,8 +26,7 @@ import 'package:http/http.dart' as http;
         final items = await _returnRepository.getAllReturns();
         return items;
       } catch (e) {
-        RSLoaders.warningSnackBar(
-          title: 'Error',
+        RSLoaders.error(
           message: 'Failed to load returns. Please try again.',
         );
         rethrow;
@@ -133,13 +132,11 @@ import 'package:http/http.dart' as http;
         if (newStatus == ReturnStatus.received) {
           try {
             await callRefundLambda(item.id!);
-            RSLoaders.successSnackBar(
-              title: "Refund Triggered",
+            RSLoaders.success(
               message: "Return moved to ‘received’. Refund is being processed.",
             );
           } catch (e) {
-            RSLoaders.errorSnackBar(
-              title: "Refund Failed",
+            RSLoaders.error(
               message: e.toString(),
             );
           }
@@ -152,14 +149,12 @@ import 'package:http/http.dart' as http;
 
         updateItemFromLists(item);
 
-        RSLoaders.successSnackBar(
-          title: 'Updated',
+        RSLoaders.success(
           message: 'Return Status Updated',
         );
 
       } catch (e) {
-        RSLoaders.warningSnackBar(
-          title: 'Error',
+        RSLoaders.error(
           message: e.toString(),
         );
       } finally {
@@ -209,13 +204,11 @@ import 'package:http/http.dart' as http;
 
         updateItemFromLists(item);
 
-        RSLoaders.successSnackBar(
-          title: 'Updated',
+        RSLoaders.success(
           message: 'Refund status updated',
         );
       } catch (e) {
-        RSLoaders.warningSnackBar(
-          title: 'Error',
+        RSLoaders.warning(
           message: e.toString(),
         );
       } finally {
